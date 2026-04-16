@@ -8,7 +8,7 @@ use App\Http\Controllers\NewsController;
 use App\Http\Controllers\CityController;
 
 Route::get('/', function () {
-    return redirect('/dashboard');
+    return view('landing');
 });
 
 Route::middleware('guest')->group(function () {
@@ -26,7 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
     Route::get('/get-cities/{state_id}', [CityController::class, 'getCitiesByState'])->name('cities.by-state');
-Route::put('/news/{id}/status', [NewsController::class, 'updateStatus'])->name('news.updateStatus');
+    Route::put('/news/{id}/status', [NewsController::class, 'updateStatus'])->name('news.updateStatus');
     Route::view('/create-skill', 'create-skill')->name('create-skill');
 
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

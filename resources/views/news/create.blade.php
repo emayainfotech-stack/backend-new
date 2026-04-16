@@ -37,10 +37,11 @@
                                     <label for="short_description" class="form-label">Description <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('short_description') is-invalid @enderror"
                                               id="short_description" name="short_description" rows="3"
-                                              maxlength="700"
                                               placeholder="Maximum 70 words "
                                               required>{{ old('short_description') }}</textarea>
-                                    <div class="form-text text-muted">Maximum 70 words</div>
+                                    <div class="form-text text-muted">
+                                        <span id="short_description_word_count">0</span>/70 words
+                                    </div>
                                     @error('short_description')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -223,6 +224,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state_id');
     const citySelect = document.getElementById('city_id');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const shortDescription = document.getElementById('short_description');
+    const wordCountEl = document.getElementById('short_description_word_count');
+    const WORD_LIMIT = 70;
+
+    function countWords(text) {
+        return (text || '')
+            .trim()
+            .split(/\s+/u)
+            .filter(Boolean)
+            .length;
+    }
+
+    function updateWordCount() {
+        if (!shortDescription || !wordCountEl) return;
+        const words = countWords(shortDescription.value);
+        wordCountEl.textContent = String(words);
+        shortDescription.classList.toggle('is-invalid', words > WORD_LIMIT);
+    }
 
     // Load cities when state changes
     stateSelect.addEventListener('change', function() {
@@ -270,6 +289,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load cities on page load if state is already selected
     if (stateSelect.value) {
         stateSelect.dispatchEvent(new Event('change'));
+    }
+
+    // Word counter (Hindi/English both)
+    if (shortDescription) {
+        shortDescription.addEventListener('input', updateWordCount);
+        updateWordCount();
     }
 });
 </script>

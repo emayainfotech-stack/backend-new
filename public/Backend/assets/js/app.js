@@ -293,38 +293,6 @@
   }
 
 
-
-  // Buy Now & Doc buttons [only for server] 
-  const buyNowWrapper  = document.createElement('div'),
-        docLink        = document.createElement('a'),
-        docLinkIcon    = document.createElement('i'),
-        buyNowLink     = document.createElement('a'),
-        buyNowLinkIcon = document.createElement('i'),
-        docLinkHref    = 'https://nobleui.com/html/documentation/docs.html',
-        buyNowLinkHref = 'https://1.envato.market/nobleui_html';
-
-  buyNowWrapper.classList.add('buy-now-wrapper');
-  
-  docLink.classList.add('btn', 'btn-primary');
-  docLink.setAttribute('href', docLinkHref);
-  docLink.setAttribute('target', '_blank');
-  docLinkIcon.classList.add('icon-lg');
-  docLinkIcon.setAttribute('data-lucide', 'file-text');
-
-  buyNowLink.classList.add('btn', 'btn-danger', 'ms-2');
-  buyNowLink.innerText = 'Buy Now';
-  buyNowLink.setAttribute('href', buyNowLinkHref);
-  buyNowLink.setAttribute('target', '_blank');
-  buyNowLinkIcon.classList.add('icon-lg', 'me-1');
-  buyNowLinkIcon.setAttribute('data-lucide', 'shopping-cart');
-
-  docLink.append(docLinkIcon);
-  buyNowLink.prepend(buyNowLinkIcon);
-  buyNowWrapper.append(docLink, buyNowLink);
-  body.append(buyNowWrapper);
-
-
-
   // Enable lucide icons with SVG markup
   lucide.createIcons();
 

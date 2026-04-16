@@ -69,6 +69,7 @@
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
+                                <th>Sr. No.</th>
                                 <th>Title</th>
                                 <th>Category</th>
                                 <th>City</th>
@@ -82,6 +83,9 @@
                         <tbody>
                             @forelse($news as $item)
                                 <tr>
+                                    <!-- Index (loop->index) -->
+                                    <td>{{ $loop->index + 1 }}</td>
+                                    
                                     <!-- Title -->
                                     <td>
                                         <strong>{{ \Illuminate\Support\Str::limit($item->title, 40) }}</strong>
@@ -96,6 +100,7 @@
                                     <!-- Media -->
                                     <td>
                                         @if($item->media_path)
+                                   
                                             @if(Str::endsWith($item->media_path, '.mp4'))
                                                 <span class="badge bg-dark">Video</span>
                                             @else
@@ -212,10 +217,7 @@
                                                         <i class="bi bi-folder2 me-1"></i>
                                                         {{ $item->category->name ?? 'N/A' }}
                                                     </span>
-                                                    <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                        <i class="bi bi-person me-1"></i>
-                                                        {{ $item->author->name ?? 'N/A' }}
-                                                    </span>
+                                             
                                                     <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
                                                         <i class="bi bi-calendar3 me-1"></i>
                                                         {{ $item->created_at->format('d M Y') }}
@@ -303,7 +305,11 @@
 
                 <!-- Pagination -->
                 <div class="mt-3">
-                    {{ $news->withQueryString()->links() }}
+                    @if($news->hasPages())
+                    <div class="mt-3 w-100">
+                    {{ $news->links('pagination::bootstrap-5') }}
+                    </div>
+                    @endif
                 </div>
 
             </div>

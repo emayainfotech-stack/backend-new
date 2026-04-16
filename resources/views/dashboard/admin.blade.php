@@ -158,6 +158,7 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
+                            <th>Sr. No.</th>
                             <th>Title</th>
                             <th>Category</th>
                             <th>Author</th>
@@ -170,6 +171,7 @@
                     <tbody>
                         @forelse($recentNews as $news)
                         <tr>
+                            <td>{{ $loop->index + 1 }}</td>
                             <td class="fw-medium">{{ \Illuminate\Support\Str::limit($news->title, 50) }}</td>
                             <td>{{ $news->category->name ?? 'N/A' }}</td>
                             <td>{{ $news->author->name ?? 'N/A' }}</td>
@@ -182,7 +184,8 @@
                                     <span class="badge bg-danger">Rejected</span>
                                 @endif
                             </td>
-                            <td>{{ $news->created_at->format('d M Y') }}</td>
+                            <td>{{ $news->formatted_publish_at ?? ($news->publish_at ? $news->publish_at->format('d M Y') : '—') }}</td>
+                       
                             <td>
                                 <button class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal"
@@ -242,13 +245,10 @@
                                                 <i class="bi bi-folder2 me-1"></i>
                                                 {{ $news->category->name ?? 'N/A' }}
                                             </span>
-                                            <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                <i class="bi bi-person me-1"></i>
-                                                {{ $news->author->name ?? 'N/A' }}
-                                            </span>
+                                        
                                             <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
                                                 <i class="bi bi-calendar3 me-1"></i>
-                                                {{ $news->created_at->format('d M Y') }}
+                                                {{ $news->formatted_publish_at ?? ($news->publish_at ? $news->publish_at->format('d M Y') : '—') }}
                                             </span>
                                             @if($news->city)
                                                 <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\News;
-use App\Models\PushNotification;
 use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -32,7 +31,7 @@ class NewsController extends Controller
         });
     }
     
-    $news = $query->orderBy('created_at', 'desc')->paginate(15);
+    $news = $query->orderBy('created_at', 'desc')->paginate(3);
     
     return view('news.index', compact('news'));
 }
@@ -68,7 +67,16 @@ class NewsController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'short_description' => ['required', 'string', 'max:700'],
+            'short_description' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $words = preg_split('/\s+/u', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+                    if (count($words) > 70) {
+                        $fail('Description must not be greater than 70 words.');
+                    }
+                },
+            ],
          
 
             'category_id' => ['required', 'exists:categories,id'],
@@ -138,90 +146,70 @@ class NewsController extends Controller
     public function update(Request $request, $id)
     {
         $news = News::findOrFail($id);
-
+    
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'short_description' => ['required', 'string', 'max:700'],
-            
+            'short_description' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $words = preg_split('/\s+/u', trim($value), -1, PREG_SPLIT_NO_EMPTY);
+                    if (count($words) > 70) {
+                        $fail('Description must not be greater than 70 words.');
+                    }
+                },
+            ],
             'category_id' => ['required', 'exists:categories,id'],
-            'city' => ['nullable', 'string', 'max:255'],
             'state_id' => ['required', 'exists:states,id'],
             'city_id' => ['required', 'exists:cities,id'],
             'tags' => ['nullable', 'string'],
-            'publishing_mode' => ['required', 'in:instant,schedule'],
-            'publish_at' => ['nullable', 'date'],
             'status' => ['required', 'in:pending,published,rejected'],
-            'media' => ['nullable', 'file', 'max:51200'], // 50MB
-            'media_type' => ['nullable', 'in:image,video'],
-            'is_important' => ['nullable', 'boolean'],
+            'media' => ['nullable', 'file', 'max:51200'],
             'send_push_notification' => ['nullable', 'boolean'],
         ]);
-
-        $publishAt = null;
-        if ($data['publishing_mode'] === 'schedule') {
-            $publishAt = $data['publish_at'] ? Carbon::parse($data['publish_at'])->setTimezone(config('app.timezone')) : null;
-        } elseif ($data['publishing_mode'] === 'instant' && $data['status'] === 'published') {
-            $publishAt = Carbon::now();
-        }
-
+    
+        // Tags convert (comma separated → array)
         $tags = null;
-        if (! empty($data['tags'])) {
+        if (!empty($data['tags'])) {
             $tags = collect(explode(',', $data['tags']))
-                ->map(fn ($t) => trim($t))
+                ->map(fn($t) => trim($t))
                 ->filter()
                 ->values()
                 ->all();
         }
-
-        // Handle media removal
+    
+        // Media handling
         $mediaPath = $news->media_path;
-        if ($request->has('remove_media') || $request->hasFile('media')) {
-            // Remove old media if exists
+
+        // 🔴 CASE 1: Remove button click
+        if ($request->remove_media == "1") {
             if ($news->media_path && Storage::disk('public')->exists($news->media_path)) {
                 Storage::disk('public')->delete($news->media_path);
             }
             $mediaPath = null;
         }
 
-        // Upload new media if provided
+        // 🟢 CASE 2: New media upload
         if ($request->hasFile('media')) {
+            // old delete
+            if ($news->media_path && Storage::disk('public')->exists($news->media_path)) {
+                Storage::disk('public')->delete($news->media_path);
+            }
             $mediaPath = $request->file('media')->store('news-media', 'public');
         }
 
         $news->update([
             'title' => $data['title'],
             'short_description' => $data['short_description'],
-      
-            'category_id' => (int) $data['category_id'],
-            'city' => $data['city'] ?: 'Jaipur',
-            'state_id' => (int) $data['state_id'],
-            'city_id' => (int) $data['city_id'],
+            'category_id' => $data['category_id'],
+            'state_id' => $data['state_id'],
+            'city_id' => $data['city_id'],
             'tags' => $tags,
             'status' => $data['status'],
-            'publish_at' => $publishAt,
-            'media_type' => $data['media_type'] ?? null,
             'media_path' => $mediaPath,
-            'is_important' => (bool) $request->boolean('is_important'),
-            'send_push_notification' => (bool) $request->boolean('send_push_notification'),
+            'send_push_notification' => $request->boolean('send_push_notification'),
         ]);
-
-        if ($news->send_push_notification && $news->is_important && $news->status === 'published') {
-            PushNotification::create([
-                'news_id' => $news->id,
-                'title' => $news->title,
-                'body' => $news->short_description,
-                'status' => 'queued',
-            ]);
-        } elseif ($news->send_push_notification && ! $news->is_important) {
-            PushNotification::create([
-                'news_id' => $news->id,
-                'title' => $news->title,
-                'body' => $news->short_description,
-                'status' => 'skipped',
-                'error' => 'Only important news can be notified.',
-            ]);
-        }
-
+    
         return redirect()->route('news.index')->with('success', 'News updated successfully.');
     }
 

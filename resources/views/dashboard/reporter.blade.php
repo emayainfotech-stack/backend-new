@@ -295,13 +295,10 @@
                                                     <i class="bi bi-folder2 me-1"></i>
                                                     {{ $item->category->name ?? 'N/A' }}
                                                 </span>
-                                                <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                    <i class="bi bi-person me-1"></i>
-                                                    {{ $item->author->name ?? 'N/A' }}
-                                                </span>
+                                        
                                                 <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
                                                     <i class="bi bi-calendar3 me-1"></i>
-                                                    {{ $item->created_at->format('d M Y') }}
+                                                    {{ $item->created_at->format('d M Y') ?? ($item->publish_at ? $item->publish_at->format('d M Y') : '—') }}
                                                 </span>
                                                 @if($item->city)
                                                     <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">

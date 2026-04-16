@@ -4,13 +4,13 @@
 
 @section('content')
     <nav aria-label="breadcrumb">
-  <ol class="breadcrumb breadcrumb-arrwo">
-    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('categories.index') }}">Categories</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Categories List</li>
-  </ol>
-</nav>
- 
+        <ol class="breadcrumb breadcrumb-arrwo">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('categories.index') }}">Categories</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Categories List</li>
+        </ol>
+    </nav>
+
     <div class="card">
         <div class="card-body">
             <!-- Header -->
@@ -26,7 +26,7 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Sr. No.</th>
                             <th>Name</th>
                             <th>News Count</th>
                             <th>Created At</th>
@@ -36,10 +36,12 @@
                     <tbody>
                         @forelse($categories as $category)
                             <tr>
-                                <td>{{ $category->id }}</td>
+                                <!-- Index (loop->index) -->
+                                <td>{{ $loop->index + 1 }}</td>
+                                
                                 <td><strong>{{ $category->name }}</strong></td>
                                 <td>
-                                    <span >{{ $category->news_count ?? 0 }} </span>
+                                    <span>{{ $category->news_count ?? 0 }}</span>
                                 </td>
                                 <td>{{ $category->created_at ? $category->created_at->format('d M Y') : '—' }}</td>
                                 <td>
@@ -75,7 +77,16 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            <div class="mt-3">
+                @if($categories->hasPages())
+                    <div class="mt-3 w-100">
+                        {{ $categories->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
- 
+
 @endsection
