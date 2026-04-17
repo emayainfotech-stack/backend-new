@@ -81,7 +81,6 @@
                         </div>
                     </div>
 
-                    <!-- 🔥 IMPORTANT hidden field -->
                     <input type="hidden" id="old_city_id" value="{{ old('city_id', $news->city_id) }}">
 
                     <!-- Tags -->
@@ -93,9 +92,7 @@
                     </div>
 
                     <!-- Status -->
-                    @php
-                        $status = old('status', $news->status);
-                    @endphp
+                    @php $status = old('status', $news->status); @endphp
 
                     <div class="mt-3">
                         <label class="form-label">Status *</label>
@@ -124,7 +121,20 @@
                         @if($news->media_path)
                             <div class="mt-2">
 
-                                <img src="{{ asset('storage/' . $news->media_path) }}" class="img-fluid rounded mb-2">
+                                @php
+                                    $ext = strtolower(pathinfo($news->media_path, PATHINFO_EXTENSION));
+                                @endphp
+
+                                @if(in_array($ext, ['jpg','jpeg','png','webp']))
+                                    <!-- Image Preview -->
+                                    <img src="{{ asset('storage/' . $news->media_path) }}" class="img-fluid rounded mb-2">
+                                @elseif(in_array($ext, ['mp4','webm','ogg']))
+                                    <!-- Video Preview -->
+                                    <video class="img-fluid rounded mb-2" controls>
+                                        <source src="{{ asset('storage/' . $news->media_path) }}" type="video/mp4">
+                                        Your browser does not support video
+                                    </video>
+                                @endif
 
                                 <!-- Remove Button -->
                                 <div>
@@ -136,7 +146,6 @@
                             </div>
                         @endif
 
-                        <!-- Hidden field -->
                         <input type="hidden" name="remove_media" id="remove_media" value="0">
                     </div>
 
@@ -170,79 +179,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state_id');
     const citySelect = document.getElementById('city_id');
     const oldCityId = document.getElementById('old_city_id').value;
-    const shortDescription = document.getElementById('short_description');
-    const wordCountEl = document.getElementById('short_description_word_count');
-    const WORD_LIMIT = 70;
-
-    function countWords(text) {
-        return (text || '')
-            .trim()
-            .split(/\s+/u)
-            .filter(Boolean)
-            .length;
-    }
-
-    function updateWordCount() {
-        if (!shortDescription || !wordCountEl) return;
-        const words = countWords(shortDescription.value);
-        wordCountEl.textContent = String(words);
-        shortDescription.classList.toggle('is-invalid', words > WORD_LIMIT);
-    }
 
     function loadCities(stateId, selectedCityId = null) {
-
         citySelect.innerHTML = '<option value="">Loading...</option>';
 
         fetch(`/get-cities/${stateId}`)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-
             citySelect.innerHTML = '<option value="">Select City</option>';
-
             data.forEach(city => {
-                let option = document.createElement('option');
-                option.value = city.id;
-                option.textContent = city.name;
-
+                let option = new Option(city.name, city.id);
                 if (selectedCityId && selectedCityId == city.id) {
                     option.selected = true;
                 }
-
-                citySelect.appendChild(option);
+                citySelect.add(option);
             });
-
         });
     }
 
-    // On state change
-    stateSelect.addEventListener('change', function() {
-        if (this.value) {
-            loadCities(this.value);
-        }
-    });
-
-    // 🔥 Edit page load
     if (stateSelect.value) {
         loadCities(stateSelect.value, oldCityId);
     }
 
-    // Word counter (Hindi/English both)
-    if (shortDescription) {
-        shortDescription.addEventListener('input', updateWordCount);
-        updateWordCount();
-    }
+    stateSelect.addEventListener('change', function() {
+        if (this.value) loadCities(this.value);
+    });
 
-    // Remove media button functionality
-    var removeMediaBtn = document.getElementById('removeMediaBtn');
-    var removeMediaInput = document.getElementById('remove_media');
-    if (removeMediaBtn && removeMediaInput) {
-        removeMediaBtn.addEventListener('click', function() {
-            removeMediaInput.value = "1";
-            // Optionally, hide the preview image and button
-            var parent = removeMediaBtn.closest('.mt-2');
-            if (parent) {
-                parent.style.display = 'none';
-            }
+    // Remove Media
+    const btn = document.getElementById('removeMediaBtn');
+    const input = document.getElementById('remove_media');
+
+    if (btn) {
+        btn.addEventListener('click', function() {
+            input.value = "1";
+            btn.closest('.mt-2').style.display = 'none';
         });
     }
 

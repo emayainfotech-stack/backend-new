@@ -173,7 +173,7 @@
                 </div>
                 @if(request('search') || request('status'))
                     <div class="col-md-12">
-                        <a href="{{ route('reporter.dashboard') }}" class="btn btn-light btn-sm">Reset Filters</a>
+                        <a href="{{ route('dashboard.reporter') }}" class="btn btn-light btn-sm">Reset Filters</a>
                     </div>
                 @endif
             </form>
@@ -183,7 +183,7 @@
     <!-- My News Table -->
     <div class="card shadow-sm rounded-3">
         <div class="card-body">
-            <h5 class="card-title mb-4">My News</h5>
+            <h5 class="card-title mb-4">Rejected News</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>

@@ -126,13 +126,16 @@ public function admin()
         // Filter by status
         if ($request->status) {
             $query->where('status', $request->status);
+        } else {
+            // Default status = rejected
+            $query->where('status', 'rejected');
         }
 
         // Paginate results
         $news = $query->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-
+        
         return view('dashboard.reporter', [
             'totalNews' => $totalNews,
             'pendingNews' => $pendingNews,
