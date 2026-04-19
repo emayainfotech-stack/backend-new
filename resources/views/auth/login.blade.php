@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="description" content="Responsive HTML Admin Dashboard Template based on Bootstrap 5">
     <meta name="author" content="NobleUI">
-    <title>Login - News Management System</title>
+    <title>Login - My City Only</title>
 
     <script src="{{ asset('Backend/assets/js/color-modes.js') }}"></script>
 
@@ -40,7 +40,7 @@
                                 <div class="auth-form-wrapper px-4 py-5">
                                     
                                     <a href="#" class="nobleui-logo d-block mb-2">
-                                        News<span>System</span>
+                                        My City <span>Only</span>
                                     </a>
 
                                     <h5 class="text-secondary fw-normal mb-4">

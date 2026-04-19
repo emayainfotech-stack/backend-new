@@ -1,6 +1,6 @@
 @extends('layouts.landing')
 
-@section('title', 'News App — Short News, Big Impact')
+@section('title', 'My City Only — Short News, Big Impact')
 
 @section('content')
     <main>
@@ -235,7 +235,7 @@
                     <div class="col-md-5">
                         <div class="d-flex align-items-center gap-2 fw-bold text-dark mb-2">
                             <span class="brand-mark" style="width:30px;height:30px;border-radius:10px;">N</span>
-                            <span>News App</span>
+                            <span>My City Only</span>
                         </div>
                         <div class="text-muted">Short news, better reading. © <span id="landingYear"></span></div>
                     </div>

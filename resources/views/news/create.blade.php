@@ -47,6 +47,14 @@
                                     @enderror
                                 </div>
 
+                                   <!-- Source Link -->
+                    <div class="mb-3">
+                        <label class="form-label">Source Link</label>
+                        <input type="url" class="form-control"
+                               name="source_link"
+                               placeholder="https://example.com"
+                               >
+                    </div>
                                 <!-- Category and City Row -->
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-12">

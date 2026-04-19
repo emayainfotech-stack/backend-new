@@ -4,8 +4,9 @@
 
 @section('content')
 
- 
     <h4 class="mb-4">Admin Dashboard</h4>
+
+   
 
     <!-- Stats Cards Row -->
     <div class="row mb-4">
@@ -154,6 +155,43 @@
                 </a>
             </div>
 
+            <form method="GET" action="{{ route('dashboard.admin') }}" class="row g-2 align-items-end mb-3">
+
+<div class="col-md-3">
+    <label class="form-label mb-1">Date From</label>
+    <input type="datetime-local" class="form-control form-control-sm"
+           name="date_from" value="{{ request('date_from') }}">
+</div>
+
+<div class="col-md-3">
+    <label class="form-label mb-1">Date To</label>
+    <input type="datetime-local" class="form-control form-control-sm"
+           name="date_to" value="{{ request('date_to') }}">
+</div>
+
+<div class="col-md-3">
+    <label class="form-label mb-1">Search</label>
+    <input type="text" class="form-control form-control-sm"
+           name="q"
+           placeholder="Search news..."
+           value="{{ request('q') }}">
+</div>
+
+<!-- Filter Button (Small) -->
+<div class="col-md-1 d-grid">
+    <button type="submit" class="btn btn-sm btn-outline-primary">
+        <i data-lucide="filter" style="width:16px;height:16px;"></i>
+    </button>
+</div>
+
+<!-- Reset Button (Small & Inline) -->
+<div class="col-md-2 d-grid">
+    <a href="{{ route('dashboard.admin') }}" class="btn btn-sm btn-outline-secondary">
+        <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
+    </a>
+</div>
+
+</form>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -184,7 +222,9 @@
                                     <span class="badge bg-danger">Rejected</span>
                                 @endif
                             </td>
-                            <td>{{ $news->formatted_publish_at ?? ($news->publish_at ? $news->publish_at->format('d M Y') : '—') }}</td>
+                            <td>{{ $news->formatted_publish_at ?? ($news->publish_at ? $news->publish_at->format('d M Y H:i') : '—') }}</td>
+                       
+                       
                        
                             <td>
                                 <button class="btn btn-sm btn-outline-primary"
@@ -275,6 +315,21 @@
                                             <p class="mb-0" style="color:#6c757d;">{{ $news->short_description }}</p>
                                         </div>
 
+                                        <!-- Source Link -->
+                                        @if($news->source_link)
+                                            <div class="mb-3">
+                                                <p class="text-uppercase text-muted fw-semibold mb-1"
+                                                    style="font-size:11px;letter-spacing:.05em;">
+                                                    Source Link
+                                                </p>
+                                                <a href="{{ $news->source_link }}"
+                                                   target="_blank" rel="noopener noreferrer"
+                                                   class="text-primary text-decoration-underline">
+                                                    {{ $news->source_link }}
+                                                </a>
+                                            </div>
+                                        @endif
+
                                       
 
                                         <!-- Tags -->
@@ -345,7 +400,7 @@
     var totalOptions = {
         series: [{
             name: 'News',
-            data: [{{ $totalNews }}, {{ $publishedNews }}, {{ $pendingNews }}]
+            data: <?= json_encode([(int) $totalNews, (int) $publishedNews, (int) $pendingNews]) ?>
         }],
         chart: {
             height: 60,
@@ -370,7 +425,7 @@
     var publishedOptions = {
         series: [{
             name: 'Published',
-            data: [{{ $publishedNews }}, {{ $publishedNews > 0 ? $publishedNews - 2 : 0 }}, {{ $publishedNews }}]
+            data: <?= json_encode([(int) $publishedNews, (int) (($publishedNews ?? 0) > 0 ? $publishedNews - 2 : 0), (int) $publishedNews]) ?>
         }],
         chart: {
             height: 60,
@@ -394,7 +449,7 @@
     var pendingOptions = {
         series: [{
             name: 'Pending',
-            data: [{{ $pendingNews }}, {{ $pendingNews > 0 ? $pendingNews - 1 : 0 }}, {{ $pendingNews }}]
+            data: <?= json_encode([(int) $pendingNews, (int) (($pendingNews ?? 0) > 0 ? $pendingNews - 1 : 0), (int) $pendingNews]) ?>
         }],
         chart: {
             height: 60,

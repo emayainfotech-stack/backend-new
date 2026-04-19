@@ -146,44 +146,143 @@
         </div>
     </div>
 
-    <!-- Search and Filter -->
-    <div class="card shadow-sm rounded-3 mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                @if(request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
-                @endif
-                <div class="col-md-6">
-                    <input type="text" 
-                           name="search" 
-                           class="form-control" 
-                           placeholder="Search by title..."
-                           value="{{ request('search') }}">
-                </div>
-                <div class="col-md-4">
-                    <select name="status" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
-                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
-                </div>
-                @if(request('search') || request('status'))
-                    <div class="col-md-12">
-                        <a href="{{ route('dashboard.reporter') }}" class="btn btn-light btn-sm">Reset Filters</a>
+    <!-- Filters (same style/params as /news) -->
+    <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+        <!-- Status Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                @php
+                    $statusLabel = 'Rejected'; // default on reporter dashboard
+                    if(request('status') == 'published') $statusLabel = 'Published';
+                    elseif(request('status') == 'pending') $statusLabel = 'Pending';
+                    elseif(request('status') == 'rejected') $statusLabel = 'Rejected';
+                @endphp
+                <i data-lucide="filter" class="icon-sm me-1"></i>
+                {{ $statusLabel }}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                <li>
+                    <a href="{{ route('dashboard.reporter', request()->except(['page', 'status'])) }}"
+                       class="dropdown-item{{ !request('status') ? ' active' : '' }}">
+                        Rejected (Default)
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('dashboard.reporter', ['status' => 'published'] + request()->except(['page', 'status'])) }}"
+                       class="dropdown-item{{ request('status') == 'published' ? ' active' : '' }}">
+                        <i data-lucide="check-circle" class="icon-sm"></i> Published
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('dashboard.reporter', ['status' => 'pending'] + request()->except(['page', 'status'])) }}"
+                       class="dropdown-item{{ request('status') == 'pending' ? ' active' : '' }}">
+                        <i data-lucide="clock" class="icon-sm"></i> Pending
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('dashboard.reporter', ['status' => 'rejected'] + request()->except(['page', 'status'])) }}"
+                       class="dropdown-item{{ request('status') == 'rejected' ? ' active' : '' }}">
+                        <i data-lucide="x-circle" class="icon-sm"></i> Rejected
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Date Filter Dropdown -->
+        <div class="dropdown d-inline-block">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <i data-lucide="calendar" class="icon-sm me-1"></i>
+                @php
+                    $dateLabel = 'Date';
+                    if(request('date') == 'today') $dateLabel = 'Today';
+                    elseif(request('date') == '7days') $dateLabel = 'Last 7 Days';
+                    elseif(request('date') == '1month') $dateLabel = 'Last 1 Month';
+                    elseif(request('date_from') || request('date_to')) $dateLabel = 'Custom Range';
+                @endphp
+                {{ $dateLabel }}
+            </button>
+            <div class="dropdown-menu p-3" style="min-width: 260px;">
+                <form method="GET" action="{{ route('dashboard.reporter') }}" id="dateFilterForm">
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    @if(request('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                    @endif
+
+                    <!-- Quick Date Options -->
+                    <div class="d-flex flex-column gap-1 mb-3">
+                        <a href="{{ route('dashboard.reporter', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'today'])) }}"
+                           class="dropdown-item {{ request('date') == 'today' ? 'active' : '' }}">Today</a>
+                        <a href="{{ route('dashboard.reporter', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'7days'])) }}"
+                           class="dropdown-item {{ request('date') == '7days' ? 'active' : '' }}">Last 7 Days</a>
+                        <a href="{{ route('dashboard.reporter', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'1month'])) }}"
+                           class="dropdown-item {{ request('date') == '1month' ? 'active' : '' }}">Last 1 Month</a>
                     </div>
-                @endif
-            </form>
+
+                    <div class="dropdown-divider my-2"></div>
+
+                    <!-- Custom Date Range -->
+                    <div class="mb-2">
+                        <label for="date_from" class="form-label small">Date From</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="date_from"
+                               name="date_from" value="{{ request('date_from') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_to" class="form-label small">Date To</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="date_to"
+                               name="date_to" value="{{ request('date_to') }}">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Apply Range</button>
+                        @if(request('date_from') || request('date_to') || request('date'))
+                            <a href="{{ route('dashboard.reporter', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']))) }}"
+                               class="btn btn-sm btn-outline-secondary">Reset</a>
+                        @endif
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+
+    <!-- 🔍 Search Form -->
+    <form method="GET" class="mb-3 d-flex gap-2">
+        @if(request('status'))
+            <input type="hidden" name="status" value="{{ request('status') }}">
+        @endif
+        @if(request('date'))
+            <input type="hidden" name="date" value="{{ request('date') }}">
+        @endif
+        @if(request('date_from'))
+            <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+        @endif
+        @if(request('date_to'))
+            <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+        @endif
+
+        <input type="text" name="search" class="form-control"
+               placeholder="Search by title, description, tags..."
+               value="{{ request('search') }}">
+
+        <button class="btn btn-primary">Search</button>
+
+        @if(request('search') || request('status') || request('date') || request('date_from') || request('date_to'))
+            <a href="{{ route('dashboard.reporter') }}" class="btn btn-light">Reset</a>
+        @endif
+    </form>
 
     <!-- My News Table -->
     <div class="card shadow-sm rounded-3">
         <div class="card-body">
-            <h5 class="card-title mb-4">Rejected News</h5>
+            <h5 class="card-title mb-4">
+                @php
+                    $titleStatus = request('status') ?: 'rejected';
+                @endphp
+                {{ ucfirst($titleStatus) }} News
+            </h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -332,6 +431,21 @@
                                                         Full Description
                                                     </p>
                                                     <p class="mb-0" style="color:#6c757d;">{{ $item->full_description }}</p>
+                                                </div>
+                                            @endif
+
+                                            <!-- Source Link -->
+                                            @if($item->source_link)
+                                                <div class="mb-3">
+                                                    <p class="text-uppercase text-muted fw-semibold mb-1"
+                                                        style="font-size:11px;letter-spacing:.05em;">
+                                                        Source Link
+                                                    </p>
+                                                    <a href="{{ $item->source_link }}"
+                                                       target="_blank" rel="noopener noreferrer"
+                                                       class="text-primary text-decoration-underline">
+                                                        {{ $item->source_link }}
+                                                    </a>
                                                 </div>
                                             @endif
 
@@ -488,7 +602,7 @@
     var totalOptions = {
         series: [{
             name: 'News',
-            data: [{{ $totalNews }}, {{ $publishedNews }}, {{ $pendingNews }}]
+            data: <?= json_encode([(int) $totalNews, (int) $publishedNews, (int) $pendingNews]) ?>
         }],
         chart: {
             height: 60,
@@ -513,7 +627,7 @@
     var publishedOptions = {
         series: [{
             name: 'Published',
-            data: [{{ $publishedNews }}, {{ $publishedNews > 0 ? $publishedNews - 2 : 0 }}, {{ $publishedNews }}]
+            data: <?= json_encode([(int) $publishedNews, (int) (($publishedNews ?? 0) > 0 ? $publishedNews - 2 : 0), (int) $publishedNews]) ?>
         }],
         chart: {
             height: 60,
@@ -537,7 +651,7 @@
     var pendingOptions = {
         series: [{
             name: 'Pending',
-            data: [{{ $pendingNews }}, {{ $pendingNews > 0 ? $pendingNews - 1 : 0 }}, {{ $pendingNews }}]
+            data: <?= json_encode([(int) $pendingNews, (int) (($pendingNews ?? 0) > 0 ? $pendingNews - 1 : 0), (int) $pendingNews]) ?>
         }],
         chart: {
             height: 60,

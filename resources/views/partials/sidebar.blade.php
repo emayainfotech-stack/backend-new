@@ -1,7 +1,7 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <a href="{{ route('dashboard') }}" class="sidebar-brand">
-            News<span>App</span>
+            My City <span>Only</span>
         </a>
         <div class="sidebar-toggler">
             <span></span>

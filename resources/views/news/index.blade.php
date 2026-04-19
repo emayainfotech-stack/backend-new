@@ -25,41 +25,124 @@
                     </a>
                 </div>
 
-                <!-- Status Filter Buttons -->
-                <div class="mb-3">
-                    <div class="btn-group" role="group">
-                        <a href="{{ route('news.index') }}" 
-                           class="btn btn-sm {{ !request('status') ? 'btn-primary' : 'btn-outline-secondary' }}">
-                            All
-                        </a>
-                        <a href="{{ route('news.index', ['status' => 'published']) }}" 
-                           class="btn btn-sm {{ request('status') == 'published' ? 'btn-success' : 'btn-outline-secondary' }}">
-                            <i data-lucide="check-circle" class="icon-sm"></i> Published
-                        </a>
-                        <a href="{{ route('news.index', ['status' => 'pending']) }}" 
-                           class="btn btn-sm {{ request('status') == 'pending' ? 'btn-warning' : 'btn-outline-secondary' }}">
-                            <i data-lucide="clock" class="icon-sm"></i> Pending
-                        </a>
-                        <a href="{{ route('news.index', ['status' => 'rejected']) }}" 
-                           class="btn btn-sm {{ request('status') == 'rejected' ? 'btn-danger' : 'btn-outline-secondary' }}">
-                            <i data-lucide="x-circle" class="icon-sm"></i> Rejected
-                        </a>
+                <!-- Status Filter Dropdown and Date Filter Dropdown (Side by Side) -->
+                <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+                    <!-- Status Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @php
+                                $statusLabel = 'All Statuses';
+                                if(request('status') == 'published') $statusLabel = 'Published';
+                                elseif(request('status') == 'pending') $statusLabel = 'Pending';
+                                elseif(request('status') == 'rejected') $statusLabel = 'Rejected';
+                            @endphp
+                            <i data-lucide="filter" class="icon-sm me-1"></i>
+                            {{ $statusLabel }}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                            <li>
+                                <a href="{{ route('news.index', request()->except(['page', 'status'])) }}" 
+                                   class="dropdown-item{{ !request('status') ? ' active' : '' }}">
+                                    All
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('news.index', ['status' => 'published'] + request()->except(['page', 'status'])) }}" 
+                                   class="dropdown-item{{ request('status') == 'published' ? ' active' : '' }}">
+                                    <i data-lucide="check-circle" class="icon-sm"></i> Published
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('news.index', ['status' => 'pending'] + request()->except(['page', 'status'])) }}" 
+                                   class="dropdown-item{{ request('status') == 'pending' ? ' active' : '' }}">
+                                    <i data-lucide="clock" class="icon-sm"></i> Pending
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('news.index', ['status' => 'rejected'] + request()->except(['page', 'status'])) }}" 
+                                   class="dropdown-item{{ request('status') == 'rejected' ? ' active' : '' }}">
+                                    <i data-lucide="x-circle" class="icon-sm"></i> Rejected
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Date Filter Dropdown (Separate) -->
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i data-lucide="calendar" class="icon-sm me-1"></i>
+                            @php
+                                $dateLabel = 'Date';
+                                if(request('date') == 'today') $dateLabel = 'Today';
+                                elseif(request('date') == '7days') $dateLabel = 'Last 7 Days';
+                                elseif(request('date') == '1month') $dateLabel = 'Last 1 Month';
+                                elseif(request('date_from') || request('date_to')) $dateLabel = 'Custom Range';
+                            @endphp
+                            {{ $dateLabel }}
+                        </button>
+                        <div class="dropdown-menu p-3" style="min-width: 260px;">
+                            <form method="GET" action="{{ route('news.index') }}" id="dateFilterForm">
+                                @if(request('status'))
+                                    <input type="hidden" name="status" value="{{ request('status') }}">
+                                @endif
+                                @if(request('search'))
+                                    <input type="hidden" name="search" value="{{ request('search') }}">
+                                @endif
+                                
+                                <!-- Quick Date Options -->
+                                <div class="d-flex flex-column gap-1 mb-3">
+                                    <a href="{{ route('news.index', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'today'])) }}" 
+                                       class="dropdown-item {{ request('date') == 'today' ? 'active' : '' }}">Today</a>
+                                    <a href="{{ route('news.index', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'7days'])) }}" 
+                                       class="dropdown-item {{ request('date') == '7days' ? 'active' : '' }}">Last 7 Days</a>
+                                    <a href="{{ route('news.index', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'1month'])) }}" 
+                                       class="dropdown-item {{ request('date') == '1month' ? 'active' : '' }}">Last 1 Month</a>
+                                </div>
+                                
+                                <div class="dropdown-divider my-2"></div>
+                                
+                                <!-- Custom Date Range -->
+                                <div class="mb-2">
+                                    <label for="date_from" class="form-label small">Date From</label>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="date_from" name="date_from" value="{{ request('date_from') }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="date_to" class="form-label small">Date To</label>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="date_to" name="date_to" value="{{ request('date_to') }}">
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">Apply Range</button>
+                                    @if(request('date_from') || request('date_to') || request('date'))
+                                        <a href="{{ route('news.index', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']))) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                                    @endif
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 🔍 Search -->
+                <!-- 🔍 Search Form -->
                 <form method="GET" class="mb-3 d-flex gap-2">
                     @if(request('status'))
                         <input type="hidden" name="status" value="{{ request('status') }}">
                     @endif
-                    
+                    @if(request('date'))
+                        <input type="hidden" name="date" value="{{ request('date') }}">
+                    @endif
+                    @if(request('date_from'))
+                        <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                    @endif
+                    @if(request('date_to'))
+                        <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                    @endif
                     <input type="text" name="search" class="form-control"
                            placeholder="Search by title, description, tags..."
                            value="{{ request('search') }}">
 
                     <button class="btn btn-primary">Search</button>
 
-                    @if(request('search') || request('status'))
+                    @if(request('search') || request('status') || request('date') || request('date_from') || request('date_to'))
                         <a href="{{ route('news.index') }}" class="btn btn-light">Reset</a>
                     @endif
                 </form>
@@ -100,7 +183,6 @@
                                     <!-- Media -->
                                     <td>
                                         @if($item->media_path)
-                                   
                                             @if(Str::endsWith($item->media_path, '.mp4'))
                                                 <span class="badge bg-dark">Video</span>
                                             @else
@@ -258,6 +340,21 @@
                                                     </div>
                                                 @endif
 
+                                                <!-- Source Link -->
+                                                @if($item->source_link)
+                                                    <div class="mb-3">
+                                                        <p class="text-uppercase text-muted fw-semibold mb-1"
+                                                            style="font-size:11px;letter-spacing:.05em;">
+                                                            Source Link
+                                                        </p>
+                                                        <a href="{{ $item->source_link }}"
+                                                           target="_blank" rel="noopener noreferrer"
+                                                           class="text-primary text-decoration-underline">
+                                                            {{ $item->source_link }}
+                                                        </a>
+                                                    </div>
+                                                @endif
+
                                                 <!-- Tags -->
                                                 @if($item->tags)
                                                     <div>
@@ -290,7 +387,7 @@
 
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">
+                                    <td colspan="8" class="text-center text-muted py-4">
                                         @if(request('status'))
                                             No {{ request('status') }} news found
                                         @else
@@ -320,14 +417,16 @@
 
 @push('styles')
 <style>
-    .btn-group .btn {
+    .btn-group .btn,
+    .dropdown .btn {
         border-radius: 6px;
         margin-right: 5px;
         padding: 6px 14px;
         font-size: 13px;
     }
     
-    .btn-group .btn i {
+    .btn-group .btn i,
+    .dropdown .btn i {
         width: 14px;
         height: 14px;
         margin-right: 4px;
@@ -371,6 +470,12 @@
     
     .badge.rounded-pill {
         border-radius: 50px !important;
+    }
+    
+    /* Dropdown menu styling */
+    .dropdown-item.active {
+        background-color: #e9ecef;
+        color: #0d6efd;
     }
 </style>
 @endpush

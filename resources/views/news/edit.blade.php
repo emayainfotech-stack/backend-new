@@ -25,15 +25,13 @@
 
                     <!-- Title -->
                     <div class="mb-3">
-                        <label class="form-label">Title *</label>
-                        <input type="text" class="form-control"
-                               name="title"
-                               value="{{ old('title', $news->title) }}" required>
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title"  value="{{ old('title', $news->title) }}" required>
                     </div>
-
+                    
                     <!-- Description -->
                     <div class="mb-3">
-                        <label class="form-label">Description *</label>
+                        <label class="form-label">Description <span class="text-danger">*</span></label>
                         <textarea class="form-control"
                                   id="short_description"
                                   name="short_description"
@@ -44,9 +42,18 @@
                         </div>
                     </div>
 
+                    <!-- Source Link -->
+                    <div class="mb-3">
+                        <label class="form-label">Source Link</label>
+                        <input type="url" class="form-control"
+                               name="source_link"
+                               placeholder="https://example.com"
+                               value="{{ old('source_link', $news->source_link) }}">
+                    </div>
+
                     <!-- Category -->
                     <div class="mb-3">
-                        <label class="form-label">Category *</label>
+                        <label class="form-label">Category <span class="text-danger">*</span></label>
                         <select class="form-select" name="category_id" required>
                             <option value="">Select Category</option>
                             @foreach($categories as $category)
@@ -61,7 +68,7 @@
                     <!-- State + City -->
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">State *</label>
+                            <label class="form-label">State <span class="text-danger">*</span></label>
                             <select class="form-select" id="state_id" name="state_id" required>
                                 <option value="">Select State</option>
                                 @foreach($states as $state)
@@ -74,7 +81,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">City *</label>
+                            <label class="form-label">City <span class="text-danger">*</span></label>
                             <select class="form-select" id="city_id" name="city_id" required>
                                 <option value="">Select State First</option>
                             </select>
@@ -95,7 +102,7 @@
                     @php $status = old('status', $news->status); @endphp
 
                     <div class="mt-3">
-                        <label class="form-label">Status *</label>
+                        <label class="form-label">Status <span class="text-danger">*</span></label>
                         <select class="form-select" name="status" required>
                             <option value="">Select Status</option>
                             <option value="pending" {{ $status == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -116,10 +123,10 @@
                     <!-- Media -->
                     <div class="mb-3">
                         <label class="form-label">Media</label>
-                        <input type="file" class="form-control" name="media">
+                        <input type="file" class="form-control" name="media" id="mediaInput">
 
                         @if($news->media_path)
-                            <div class="mt-2">
+                            <div class="mt-2" id="existingMediaWrapper">
 
                                 @php
                                     $ext = strtolower(pathinfo($news->media_path, PATHINFO_EXTENSION));
@@ -145,18 +152,21 @@
 
                             </div>
                         @endif
+                        
+                        <div class="form-text text-muted d-none" id="newMediaHint">
+                            New media selected. Save to replace existing media.
+                        </div>
 
                         <input type="hidden" name="remove_media" id="remove_media" value="0">
                     </div>
 
                     <!-- Push -->
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox"
-                               name="send_push_notification"
-                               value="1"
+                        <input class="form-check-input" type="checkbox"  id="send_push_notification" name="send_push_notification" value="1"
                                {{ old('send_push_notification', $news->send_push_notification) ? 'checked' : '' }}>
-                        <label class="form-check-label">Send Push Notification</label>
+                        <label class="form-check-label" for="send_push_notification">Send Push Notification</label>
                     </div>
+               
 
                 </div>
             </div>
@@ -179,6 +189,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state_id');
     const citySelect = document.getElementById('city_id');
     const oldCityId = document.getElementById('old_city_id').value;
+    const shortDesc = document.getElementById('short_description');
+    const wordCountEl = document.getElementById('short_description_word_count');
+
+    function countWords(text) {
+        const trimmed = (text || '').trim();
+        if (!trimmed) return 0;
+        return trimmed.split(/\s+/).filter(Boolean).length;
+    }
+
+    function updateWordCount() {
+        if (!shortDesc || !wordCountEl) return;
+        wordCountEl.textContent = String(countWords(shortDesc.value));
+    }
 
     function loadCities(stateId, selectedCityId = null) {
         citySelect.innerHTML = '<option value="">Loading...</option>';
@@ -201,6 +224,12 @@ document.addEventListener('DOMContentLoaded', function() {
         loadCities(stateSelect.value, oldCityId);
     }
 
+    // Word count init + live update (70 words max hint)
+    updateWordCount();
+    if (shortDesc) {
+        shortDesc.addEventListener('input', updateWordCount);
+    }
+
     stateSelect.addEventListener('change', function() {
         if (this.value) loadCities(this.value);
     });
@@ -208,11 +237,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove Media
     const btn = document.getElementById('removeMediaBtn');
     const input = document.getElementById('remove_media');
+    const mediaInput = document.getElementById('mediaInput');
+    const existingMediaWrapper = document.getElementById('existingMediaWrapper');
+    const newMediaHint = document.getElementById('newMediaHint');
 
     if (btn) {
         btn.addEventListener('click', function() {
             input.value = "1";
             btn.closest('.mt-2').style.display = 'none';
+        });
+    }
+
+    // When selecting new file, hide existing preview immediately (UI only).
+    if (mediaInput) {
+        mediaInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                if (existingMediaWrapper) existingMediaWrapper.style.display = 'none';
+                if (newMediaHint) newMediaHint.classList.remove('d-none');
+                input.value = "0";
+            }
         });
     }
 

@@ -7,13 +7,15 @@ use App\Models\Category;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
         // Redirect based on user role
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         if ($user->role === 'admin') {
             return redirect()->route('dashboard.admin');
         } elseif ($user->role === 'reporter') {
@@ -23,85 +25,104 @@ class DashboardController extends Controller
         return view('dashboard');
     }
 
-public function admin()
-{
-    $now = Carbon::now();
-
-    // News Statistics
-    $totalNews = News::count();
+    public function admin(Request $request)
+    {
+        $now = Carbon::now();
     
-    $publishedNews = News::query()
-        ->where('status', 'published')
-        ->where(function ($q) use ($now) {
-            $q->whereNull('publish_at')->orWhere('publish_at', '<=', $now);
-        })
-        ->count();
-
-    $pendingNews = News::query()
-        ->where('status', 'pending')
-        ->count();
-
-    $rejectedNews = News::query()
-        ->where('status', 'rejected')
-        ->count();
-
-    // Categories Statistics
-    $categoriesCount = Category::count();
-
-    // Users Statistics
-    $usersCount = User::count();
-
-    // Recent News for Dashboard Table (show all recent news, not just pending)
-    $recentNews = News::with(['author', 'category'])
-        ->where('status', 'pending')
-        ->orderBy('created_at', 'desc')
-        ->take(10)
-        ->get();
-
-    // News by Category for Chart
-    $newsByCategory = News::join('categories', 'news.category_id', '=', 'categories.id')
-        ->selectRaw('categories.name, COUNT(*) as count')
-        ->groupBy('categories.id', 'categories.name')
-        ->orderBy('count', 'desc')
-        ->take(6)
-        ->get();
-
-    // Monthly News Statistics for Chart
-    $monthlyNews = News::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-        ->whereYear('created_at', $now->year)
-        ->groupBy('month')
-        ->orderBy('month')
-        ->pluck('count', 'month')
-        ->toArray();
-
-    // Fill missing months with 0
-    $monthlyData = [];
-    for ($i = 1; $i <= 12; $i++) {
-        $monthlyData[$i] = $monthlyNews[$i] ?? 0;
+        // News Statistics
+        $totalNews = News::count();
+        
+        $publishedNews = News::where('status', 'published')
+            ->where(function ($q) use ($now) {
+                $q->whereNull('publish_at')->orWhere('publish_at', '<=', $now);
+            })
+            ->count();
+    
+        $pendingNews = News::where('status', 'pending')->count();
+        $rejectedNews = News::where('status', 'rejected')->count();
+    
+        // Base Query for Recent News
+        $recentNewsQuery = News::with(['author', 'category']);
+    
+        // 🔍 Search Filter
+        if ($request->filled('q')) {
+            $search = $request->q;
+    
+            $recentNewsQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                  ->orWhereHas('author', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%");
+                  })
+                  ->orWhereHas('category', function ($q3) use ($search) {
+                      $q3->where('name', 'like', "%$search%");
+                  });
+            });
+        }
+        
+        // 📅 Date From Filter
+        if ($request->filled('date_from')) {
+            $recentNewsQuery->where('publish_at', '>=', $request->date_from);
+        }
+    
+        // 📅 Date To Filter
+        if ($request->filled('date_to')) {
+            $recentNewsQuery->where('publish_at', '<=', $request->date_to);
+        }
+    
+        // 🔽 Order + Limit
+        $recentNews = $recentNewsQuery
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+    
+        // Categories Statistics
+        $categoriesCount = Category::count();
+    
+        // Users Statistics
+        $usersCount = User::count();
+    
+        // News by Category
+        $newsByCategory = News::join('categories', 'news.category_id', '=', 'categories.id')
+            ->selectRaw('categories.name, COUNT(*) as count')
+            ->groupBy('categories.id', 'categories.name')
+            ->orderBy('count', 'desc')
+            ->take(6)
+            ->get();
+    
+        // Monthly News
+        $monthlyNews = News::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->whereYear('created_at', $now->year)
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('count', 'month')
+            ->toArray();
+    
+        $monthlyData = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $monthlyData[$i] = $monthlyNews[$i] ?? 0;
+        }
+    
+        $importantNewsCount = News::where('is_important', true)
+            ->where('status', 'published')
+            ->count();
+    
+        return view('dashboard.admin', compact(
+            'totalNews',
+            'publishedNews',
+            'pendingNews',
+            'rejectedNews',
+            'categoriesCount',
+            'usersCount',
+            'importantNewsCount',
+            'recentNews',
+            'newsByCategory',
+            'monthlyData'
+        ));
     }
-
-    // Important News Count
-    $importantNewsCount = News::where('is_important', true)
-        ->where('status', 'published')
-        ->count();
-
-    return view('dashboard.admin', [
-        'totalNews' => $totalNews,
-        'publishedNews' => $publishedNews,
-        'pendingNews' => $pendingNews,
-        'rejectedNews' => $rejectedNews,
-        'categoriesCount' => $categoriesCount,
-        'usersCount' => $usersCount,
-        'importantNewsCount' => $importantNewsCount,
-        'recentNews' => $recentNews,
-        'newsByCategory' => $newsByCategory,
-        'monthlyData' => $monthlyData,
-    ]);
-}
-
     public function reporter(Request $request)
     {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
         // Reporter-specific statistics
         $totalNews = News::count();
@@ -118,17 +139,41 @@ public function admin()
         $query = News::with('category');
          
 
-        // Search by title
-        if ($request->search) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+        // 🔍 Search (same as /news)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('short_description', 'like', "%{$search}%")
+                    ->orWhere('tags', 'like', "%{$search}%");
+            });
         }
 
-        // Filter by status
-        if ($request->status) {
+        // 📌 Status filter (default rejected)
+        if ($request->filled('status') && in_array($request->status, ['published', 'pending', 'rejected'], true)) {
             $query->where('status', $request->status);
         } else {
-            // Default status = rejected
             $query->where('status', 'rejected');
+        }
+
+        // 📅 Quick date filter (same params as /news)
+        if ($request->filled('date')) {
+            $now = Carbon::now();
+            if ($request->date === 'today') {
+                $query->whereBetween('created_at', [$now->copy()->startOfDay(), $now->copy()->endOfDay()]);
+            } elseif ($request->date === '7days') {
+                $query->where('created_at', '>=', $now->copy()->subDays(7));
+            } elseif ($request->date === '1month') {
+                $query->where('created_at', '>=', $now->copy()->subMonth());
+            }
+        }
+
+        // 📅 Custom date range filter
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', Carbon::parse($request->date_from));
+        }
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', Carbon::parse($request->date_to));
         }
 
         // Paginate results

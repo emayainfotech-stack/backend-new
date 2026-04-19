@@ -11,30 +11,53 @@ use Illuminate\Support\Facades\Storage;
 
 class NewsController extends Controller
 {
-  public function index(Request $request)
-{
-    $query = News::with(['category', 'author']);
+    public function index(Request $request)
+    {
+        $query = News::with(['category', 'author']);
     
-    // Filter by status
-    if ($request->has('status') && in_array($request->status, ['published', 'pending', 'rejected'])) {
-        $query->where('status', $request->status);
+        // ✅ Quick Date Filters
+        if ($request->filled('date')) {
+            if ($request->date == 'today') {
+                $query->whereDate('publish_at', Carbon::today());
+            }
+    
+            if ($request->date == '7days') {
+                $query->where('publish_at', '>=', Carbon::now()->subDays(7));
+            }
+    
+            if ($request->date == '1month') {
+                $query->where('publish_at', '>=', Carbon::now()->subMonth());
+            }
+        }
+    
+        // ✅ Custom Date Range
+        if ($request->filled('date_from')) {
+            $query->where('publish_at', '>=', Carbon::parse($request->date_from));
+        }
+    
+        if ($request->filled('date_to')) {
+            $query->where('publish_at', '<=', Carbon::parse($request->date_to));
+        }
+    
+        // Status filter
+        if ($request->has('status') && in_array($request->status, ['published', 'pending', 'rejected'])) {
+            $query->where('status', $request->status);
+        }
+    
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('short_description', 'like', "%{$search}%")
+                  ->orWhere('tags', 'like', "%{$search}%");
+            });
+        }
+    
+        $news = $query->orderBy('created_at', 'desc')->paginate(15);
+    
+        return view('news.index', compact('news'));
     }
-    
-    // Search functionality
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function($q) use ($search) {
-            $q->where('title', 'like', "%{$search}%")
-              ->orWhere('short_description', 'like', "%{$search}%")
- 
-              ->orWhere('tags', 'like', "%{$search}%");
-        });
-    }
-    
-    $news = $query->orderBy('created_at', 'desc')->paginate(3);
-    
-    return view('news.index', compact('news'));
-}
 
     public function updateStatus(Request $request, $id)
     {
@@ -84,6 +107,7 @@ class NewsController extends Controller
             'city_id' => ['required', 'exists:cities,id'],
 
             'tags' => ['nullable', 'string'],
+            'source_link' => ['nullable', 'url'],
 
             // Media (form ke according)
             'media' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,mp4', 'max:10240'], // 10MB
@@ -112,6 +136,7 @@ class NewsController extends Controller
             'title' => $data['title'],
             'short_description' => $data['short_description'],
           
+            'source_link' => $data['source_link'] ?? null,
 
             'category_id' => (int) $data['category_id'],
             'created_by' => (int) $request->user()->id,
@@ -163,6 +188,7 @@ class NewsController extends Controller
             'state_id' => ['required', 'exists:states,id'],
             'city_id' => ['required', 'exists:cities,id'],
             'tags' => ['nullable', 'string'],
+            'source_link' => ['nullable', 'url'],
             'status' => ['required', 'in:pending,published,rejected'],
             'media' => ['nullable', 'file', 'max:51200'],
             'send_push_notification' => ['nullable', 'boolean'],
@@ -205,6 +231,7 @@ class NewsController extends Controller
             'state_id' => $data['state_id'],
             'city_id' => $data['city_id'],
             'tags' => $tags,
+            'source_link' => $data['source_link'],
             'status' => $data['status'],
             'media_path' => $mediaPath,
             'send_push_notification' => $request->boolean('send_push_notification'),

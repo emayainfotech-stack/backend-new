@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="description" content="Responsive HTML Admin Dashboard Template based on Bootstrap 5">
-    <meta name="author" content="News App">
-    <title>@yield('title', 'News Management System')</title>
+    <meta name="author" content="My City Only">
+    <title>@yield('title', 'My City Only')</title>
 
     <!-- color-modes:js -->
     <script src="{{ asset('Backend/assets/js/color-modes.js') }}"></script>
@@ -47,7 +47,7 @@
          <footer class="footer d-flex flex-row align-items-center justify-content-between px-4 py-3 border-top small">
             <p class="text-secondary mb-1 mb-md-0">
                 Copyright © <span id="year"></span> 
-                <a href="#" target="_blank">News App</a>.
+                <a href="#" target="_blank">My City Only</a>.
             </p>
 
         

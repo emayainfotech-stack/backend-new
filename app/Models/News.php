@@ -17,7 +17,7 @@ class News extends Model
         'created_by',
         'title',
         'short_description',
-        
+        'source_link',
         'city',
         'state_id',
         'city_id',

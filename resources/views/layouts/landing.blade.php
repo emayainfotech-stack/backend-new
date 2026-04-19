@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'News App')</title>
+    <title>@yield('title', 'My City Only')</title>
     <meta name="description" content="@yield('meta_description', 'Read news in short, fast, and clean.')">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -163,7 +163,7 @@
         <div class="container py-2">
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{{ url('/') }}">
                 <span class="brand-mark">N</span>
-                <span>News App</span>
+                <span>My City Only</span>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav">
