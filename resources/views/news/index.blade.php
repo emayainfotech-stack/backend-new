@@ -228,6 +228,14 @@
                                                     <i data-lucide="eye"></i> View
                                                 </button>
 
+                                                @if($item->status === 'rejected' && $item->rejection_reason)
+                                                    <button type="button" class="dropdown-item text-danger" 
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#reasonModal{{ $item->id }}">
+                                                        <i data-lucide="alert-circle"></i> View Reason
+                                                    </button>
+                                                @endif
+
                                                 <!-- Edit -->
                                                 <a href="{{ route('news.edit', $item->id) }}" class="dropdown-item">
                                                     <i data-lucide="edit"></i> Edit
@@ -384,6 +392,33 @@
                                     </div>
                                 </div>
                                 <!-- Modal End -->
+
+                                <!-- Rejection Reason Modal -->
+                                @if($item->status === 'rejected' && $item->rejection_reason)
+                                    <div class="modal fade" id="reasonModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 rounded-3">
+                                                <div class="modal-header border-bottom bg-danger-light py-3 px-4">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i data-lucide="alert-circle" class="text-danger"></i>
+                                                        <h5 class="modal-title fw-semibold mb-0">Rejection Reason</h5>
+                                                    </div>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body px-4 py-4">
+                                                    <p class="text-muted mb-3 small">This news article was rejected with the following reason:</p>
+                                                    <div class="alert alert-danger-light border border-danger-subtle rounded-2 p-3">
+                                                        <p class="mb-0" style="color:#721c24;">{{ $item->rejection_reason }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-top px-4 py-3">
+                                                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                <!-- Rejection Reason Modal End -->
 
                             @empty
                                 <tr>

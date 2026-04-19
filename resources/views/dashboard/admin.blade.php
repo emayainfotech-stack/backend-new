@@ -153,7 +153,7 @@
                     </svg>
                     Create News
                 </a>
-            </div>
+            </div>  
 
             <!-- Status Filter Dropdown and Date Filter Dropdown (Side by Side) -->
             <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
@@ -399,6 +399,19 @@
                                             <p class="mb-0" style="color:#6c757d;">{{ $news->short_description }}</p>
                                         </div>
 
+                                        <!-- Rejection Reason -->
+                                        @if($news->status === 'rejected' && $news->rejection_reason)
+                                            <div class="mb-3">
+                                                <p class="text-uppercase text-muted fw-semibold mb-1"
+                                                    style="font-size:11px;letter-spacing:.05em;">
+                                                    Rejection Reason
+                                                </p>
+                                                <div class="alert alert-danger-light border border-danger-subtle rounded-2 p-2">
+                                                    <p class="mb-0" style="color:#721c24;font-size:14px;">{{ $news->rejection_reason }}</p>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                         <!-- Source Link -->
                                         @if($news->source_link)
                                             <div class="mb-3">
@@ -439,12 +452,9 @@
                                     <!-- Footer -->
                                     <div class="modal-footer border-top px-4 py-3">
                                         @if($news->status == 'pending')
-                                            <form action="{{ route('news.updateStatus', $news->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="status" value="rejected">
-                                                <button type="submit" class="btn btn-outline-danger px-4">Reject</button>
-                                            </form>
+                                            <button type="button" class="btn btn-outline-danger px-4" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $news->id }}" data-bs-dismiss="modal">
+                                                Reject
+                                            </button>
 
                                             <form action="{{ route('news.updateStatus', $news->id) }}" method="POST" class="d-inline">
                                                 @csrf
@@ -460,7 +470,48 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- REJECTION MODAL -->
+                        <div class="modal fade" id="rejectModal{{ $news->id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 rounded-3">
+                                    <div class="modal-header border-bottom bg-light py-3 px-4">
+                                        <h5 class="modal-title fw-semibold">Reject News Article</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body px-4 py-4">
+                                        <form action="{{ route('news.updateStatus', $news->id) }}" method="POST" id="rejectForm{{ $news->id }}">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="status" value="rejected">
+                                            
+                                            <p class="text-muted mb-3">Are you sure you want to reject this news article? You can optionally provide a reason for rejection.</p>
+                                            
+                                            <div class="mb-3">
+                                                <label for="rejection_reason{{ $news->id }}" class="form-label">Rejection Reason <span class="text-muted">(Optional)</span></label>
+                                                <textarea 
+                                                    class="form-control form-control-sm" 
+                                                    id="rejection_reason{{ $news->id }}" 
+                                                    name="rejection_reason"
+                                                    rows="3"
+                                                    placeholder="Enter reason for rejection..."
+                                                    maxlength="500"></textarea>
+                                                <small class="text-muted d-block mt-1">Max 500 characters</small>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer border-top px-4 py-3">
+                                        <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" form="rejectForm{{ $news->id }}" class="btn btn-danger px-4">
+                                            <i class="bi bi-x-circle me-1"></i> Reject Article
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- REJECTION MODAL END -->
+
                         <!-- MODAL END -->
+
 
                         @empty
                         <tr>

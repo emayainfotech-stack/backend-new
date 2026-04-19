@@ -25,6 +25,7 @@ class News extends Model
         'media_path',
         'tags',
         'status',
+        'rejection_reason',
         'publish_at',
         'is_important',
         'send_push_notification',

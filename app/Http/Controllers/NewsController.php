@@ -65,12 +65,16 @@ class NewsController extends Controller
 
         $request->validate([
             'status' => 'required|in:published,rejected',
+            'rejection_reason' => 'nullable|string|max:500',
         ]);
 
         $news->status = $request->status;
 
         if ($request->status === 'published') {
             $news->publish_at = now();
+            $news->rejection_reason = null;
+        } elseif ($request->status === 'rejected') {
+            $news->rejection_reason = $request->rejection_reason;
         }
 
         $news->save();
