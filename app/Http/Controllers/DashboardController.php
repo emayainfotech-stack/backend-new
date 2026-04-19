@@ -44,12 +44,42 @@ class DashboardController extends Controller
         // Base Query for Recent News
         $recentNewsQuery = News::with(['author', 'category']);
     
-        // 🔍 Search Filter
-        if ($request->filled('q')) {
-            $search = $request->q;
+        // ✅ Quick Date Filters
+        if ($request->filled('date')) {
+            if ($request->date == 'today') {
+                $recentNewsQuery->whereDate('publish_at', Carbon::today());
+            }
     
+            if ($request->date == '7days') {
+                $recentNewsQuery->where('publish_at', '>=', Carbon::now()->subDays(7));
+            }
+    
+            if ($request->date == '1month') {
+                $recentNewsQuery->where('publish_at', '>=', Carbon::now()->subMonth());
+            }
+        }
+    
+        // ✅ Custom Date Range
+        if ($request->filled('date_from')) {
+            $recentNewsQuery->where('publish_at', '>=', Carbon::parse($request->date_from));
+        }
+    
+        if ($request->filled('date_to')) {
+            $recentNewsQuery->where('publish_at', '<=', Carbon::parse($request->date_to));
+        }
+    
+        // Status filter
+        if ($request->has('status') && in_array($request->status, ['published', 'pending', 'rejected'])) {
+            $recentNewsQuery->where('status', $request->status);
+        }
+    
+        // 🔍 Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
             $recentNewsQuery->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%$search%")
+                  ->orWhere('short_description', 'like', "%$search%")
+                  ->orWhere('tags', 'like', "%$search%")
                   ->orWhereHas('author', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%$search%");
                   })
@@ -57,16 +87,6 @@ class DashboardController extends Controller
                       $q3->where('name', 'like', "%$search%");
                   });
             });
-        }
-        
-        // 📅 Date From Filter
-        if ($request->filled('date_from')) {
-            $recentNewsQuery->where('publish_at', '>=', $request->date_from);
-        }
-    
-        // 📅 Date To Filter
-        if ($request->filled('date_to')) {
-            $recentNewsQuery->where('publish_at', '<=', $request->date_to);
         }
     
         // 🔽 Order + Limit

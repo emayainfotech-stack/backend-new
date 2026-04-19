@@ -155,43 +155,127 @@
                 </a>
             </div>
 
-            <form method="GET" action="{{ route('dashboard.admin') }}" class="row g-2 align-items-end mb-3">
+            <!-- Status Filter Dropdown and Date Filter Dropdown (Side by Side) -->
+            <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+                <!-- Status Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        @php
+                            $statusLabel = 'All Statuses';
+                            if(request('status') == 'published') $statusLabel = 'Published';
+                            elseif(request('status') == 'pending') $statusLabel = 'Pending';
+                            elseif(request('status') == 'rejected') $statusLabel = 'Rejected';
+                        @endphp
+                        <i data-lucide="filter" class="icon-sm me-1"></i>
+                        {{ $statusLabel }}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                        <li>
+                            <a href="{{ route('dashboard.admin', request()->except(['page', 'status'])) }}" 
+                               class="dropdown-item{{ !request('status') ? ' active' : '' }}">
+                                All
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.admin', ['status' => 'published'] + request()->except(['page', 'status'])) }}" 
+                               class="dropdown-item{{ request('status') == 'published' ? ' active' : '' }}">
+                                <i data-lucide="check-circle" class="icon-sm"></i> Published
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.admin', ['status' => 'pending'] + request()->except(['page', 'status'])) }}" 
+                               class="dropdown-item{{ request('status') == 'pending' ? ' active' : '' }}">
+                                <i data-lucide="clock" class="icon-sm"></i> Pending
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.admin', ['status' => 'rejected'] + request()->except(['page', 'status'])) }}" 
+                               class="dropdown-item{{ request('status') == 'rejected' ? ' active' : '' }}">
+                                <i data-lucide="x-circle" class="icon-sm"></i> Rejected
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
-<div class="col-md-3">
-    <label class="form-label mb-1">Date From</label>
-    <input type="datetime-local" class="form-control form-control-sm"
-           name="date_from" value="{{ request('date_from') }}">
-</div>
+                <!-- Date Filter Dropdown (Separate) -->
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-lucide="calendar" class="icon-sm me-1"></i>
+                        @php
+                            $dateLabel = 'Date';
+                            if(request('date') == 'today') $dateLabel = 'Today';
+                            elseif(request('date') == '7days') $dateLabel = 'Last 7 Days';
+                            elseif(request('date') == '1month') $dateLabel = 'Last 1 Month';
+                            elseif(request('date_from') || request('date_to')) $dateLabel = 'Custom Range';
+                        @endphp
+                        {{ $dateLabel }}
+                    </button>
+                    <div class="dropdown-menu p-3" style="min-width: 260px;">
+                        <form method="GET" action="{{ route('dashboard.admin') }}" id="dateFilterForm">
+                            @if(request('status'))
+                                <input type="hidden" name="status" value="{{ request('status') }}">
+                            @endif
+                            @if(request('search'))
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                            @endif
+                            
+                            <!-- Quick Date Options -->
+                            <div class="d-flex flex-column gap-1 mb-3">
+                                <a href="{{ route('dashboard.admin', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'today'])) }}" 
+                                   class="dropdown-item {{ request('date') == 'today' ? 'active' : '' }}">Today</a>
+                                <a href="{{ route('dashboard.admin', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'7days'])) }}" 
+                                   class="dropdown-item {{ request('date') == '7days' ? 'active' : '' }}">Last 7 Days</a>
+                                <a href="{{ route('dashboard.admin', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']), ['date'=>'1month'])) }}" 
+                                   class="dropdown-item {{ request('date') == '1month' ? 'active' : '' }}">Last 1 Month</a>
+                            </div>
+                            
+                            <div class="dropdown-divider my-2"></div>
+                            
+                            <!-- Custom Date Range -->
+                            <div class="mb-2">
+                                <label for="date_from" class="form-label small">Date From</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="date_from" name="date_from" value="{{ request('date_from') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="date_to" class="form-label small">Date To</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="date_to" name="date_to" value="{{ request('date_to') }}">
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Apply Range</button>
+                                @if(request('date_from') || request('date_to') || request('date'))
+                                    <a href="{{ route('dashboard.admin', array_merge(request()->except(['page', 'date', 'date_from', 'date_to']))) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
-<div class="col-md-3">
-    <label class="form-label mb-1">Date To</label>
-    <input type="datetime-local" class="form-control form-control-sm"
-           name="date_to" value="{{ request('date_to') }}">
-</div>
+            <!-- 🔍 Search Form -->
+            <form method="GET" class="mb-3 d-flex gap-2">
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                @if(request('date'))
+                    <input type="hidden" name="date" value="{{ request('date') }}">
+                @endif
+                @if(request('date_from'))
+                    <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                @endif
+                @if(request('date_to'))
+                    <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                @endif
+                <input type="text" name="search" class="form-control"
+                       placeholder="Search by title, description, tags..."
+                       value="{{ request('search') }}">
 
-<div class="col-md-3">
-    <label class="form-label mb-1">Search</label>
-    <input type="text" class="form-control form-control-sm"
-           name="q"
-           placeholder="Search news..."
-           value="{{ request('q') }}">
-</div>
+                <button class="btn btn-primary">Search</button>
 
-<!-- Filter Button (Small) -->
-<div class="col-md-1 d-grid">
-    <button type="submit" class="btn btn-sm btn-outline-primary">
-        <i data-lucide="filter" style="width:16px;height:16px;"></i>
-    </button>
-</div>
-
-<!-- Reset Button (Small & Inline) -->
-<div class="col-md-2 d-grid">
-    <a href="{{ route('dashboard.admin') }}" class="btn btn-sm btn-outline-secondary">
-        <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-    </a>
-</div>
-
-</form>
+                @if(request('search') || request('status') || request('date') || request('date_from') || request('date_to'))
+                    <a href="{{ route('dashboard.admin') }}" class="btn btn-light">Reset</a>
+                @endif
+            </form>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
