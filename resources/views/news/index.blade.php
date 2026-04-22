@@ -171,7 +171,12 @@
                                     
                                     <!-- Title -->
                                     <td>
-                                        <strong>{{ \Illuminate\Support\Str::limit($item->title, 40) }}</strong>
+                                        <button type="button"
+                                                class="btn btn-link p-0 text-start text-decoration-none fw-semibold news-open-modal"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reviewModal{{ $item->id }}">
+                                            {{ \Illuminate\Support\Str::limit($item->title, 40) }}
+                                        </button>
                                     </td>
 
                                     <!-- Category -->
@@ -184,11 +189,28 @@
                                     <td>
                                         @if($item->media_path)
                                             @if(Str::endsWith($item->media_path, '.mp4'))
-                                                <span class="badge bg-dark">Video</span>
+                                                @if($item->thumbnail_path)
+                                                    <img src="{{ asset('storage/' . $item->thumbnail_path) }}"
+                                                         width="40" height="40"
+                                                         class="rounded object-fit-cover news-open-modal"
+                                                         role="button"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#reviewModal{{ $item->id }}"
+                                                         alt="Video thumbnail">
+                                                @else
+                                                    <span class="badge bg-dark news-open-modal"
+                                                          role="button"
+                                                          data-bs-toggle="modal"
+                                                          data-bs-target="#reviewModal{{ $item->id }}">Video</span>
+                                                @endif
                                             @else
                                                 <img src="{{ asset('storage/' . $item->media_path) }}"
                                                      width="40" height="40"
-                                                     class="rounded object-fit-cover">
+                                                     class="rounded object-fit-cover news-open-modal"
+                                                     role="button"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#reviewModal{{ $item->id }}"
+                                                     alt="Media">
                                             @endif
                                         @else
                                             <span class="text-muted">No Media</span>
@@ -282,24 +304,27 @@
                                             <!-- Body -->
                                             <div class="modal-body p-4">
 
+                                                <!-- Media -->
+                                                @if($item->media_path)
+                                                    <div class="news-preview-media rounded-3 overflow-hidden bg-light border mb-4" style="display: flex; align-items: center; justify-content: center;">
+                                                        @if(Str::endsWith($item->media_path, '.mp4') || Str::endsWith($item->media_path, '.mov') || Str::endsWith($item->media_path, '.avi'))
+                                                            <video src="{{ asset('storage/'.$item->media_path) }}"
+                                                                   controls
+                                                                   playsinline
+                                                                   preload="metadata"
+                                                                   class="news-preview-video"></video>
+                                                        @else
+                                                            <img src="{{ asset('storage/'.$item->media_path) }}"
+                                                                 class="news-preview-image"
+                                                                 alt="Media preview">
+                                                        @endif
+                                                    </div>
+                                                @endif
+
                                                 <!-- Title -->
                                                 <h4 class="fw-semibold mb-3" style="line-height:1.4;">
                                                     {{ $item->title }}
                                                 </h4>
-
-                                                <!-- Media -->
-                                                @if($item->media_path)
-                                                    <div class="rounded-3 overflow-hidden bg-light border mb-4"
-                                                        style="max-height:240px;">
-                                                        @if(Str::endsWith($item->media_path, '.mp4') || Str::endsWith($item->media_path, '.mov') || Str::endsWith($item->media_path, '.avi'))
-                                                            <video src="{{ asset('storage/'.$item->media_path) }}"
-                                                                controls class="w-100"></video>
-                                                        @else
-                                                            <img src="{{ asset('storage/'.$item->media_path) }}"
-                                                                class="w-100 object-fit-cover">
-                                                        @endif
-                                                    </div>
-                                                @endif
 
                                                 <!-- Meta badges -->
                                                 <div class="d-flex flex-wrap gap-2 mb-4">
@@ -501,6 +526,29 @@
     .object-fit-cover {
         object-fit: cover;
         max-height: 240px;
+    }
+
+    .news-open-modal { cursor: pointer; }
+
+    /* Bigger centered media preview inside modal */
+    .news-preview-media {
+        width: 100%;
+        height: min(70vh, 520px)!important;
+        display: flex;
+        align-items: center!important;
+        justify-content: center!important;
+        background: #000!important;
+    }
+
+    .news-preview-video,
+    .news-preview-image {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
     }
     
     .badge.rounded-pill {

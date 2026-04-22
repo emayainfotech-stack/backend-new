@@ -11,6 +11,10 @@ Route::get('/', function () {
     return view('landing');
 });
 
+// Public legal pages
+Route::view('/terms-and-conditions', 'public.terms')->name('public.terms');
+Route::view('/privacy-policy', 'public.privacy')->name('public.privacy');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');

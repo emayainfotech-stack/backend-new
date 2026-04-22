@@ -254,7 +254,8 @@
                                 <div class="d-grid gap-1">
                                     <a href="#">About</a>
                                     <a href="#">Contact</a>
-                                    <a href="#">Privacy</a>
+                                    <a href="{{ route('public.terms') }}">Terms</a>
+                                    <a href="{{ route('public.privacy') }}">Privacy</a>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-4">

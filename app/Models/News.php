@@ -23,6 +23,7 @@ class News extends Model
         'city_id',
         'media_type',
         'media_path',
+        'thumbnail_path',
         'tags',
         'status',
         'rejection_reason',

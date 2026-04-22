@@ -120,6 +120,21 @@
                 <!-- RIGHT -->
                 <div class="col-md-4">
 
+                    <!-- Media Type -->
+                    <div class="mb-3">
+                        <label class="form-label">Media Type</label>
+                        <select class="form-select" id="media_type" name="media_type">
+                            @php
+                                $defaultMediaType = $news->media_type
+                                    ?: (Str::endsWith((string) $news->media_path, '.mp4') ? 'video' : 'image');
+                                $selectedMediaType = old('media_type', $defaultMediaType ?: 'image');
+                            @endphp
+                            <option value="image" {{ $selectedMediaType === 'image' ? 'selected' : '' }}>Image</option>
+                            <option value="video" {{ $selectedMediaType === 'video' ? 'selected' : '' }}>Video</option>
+                        </select>
+                        <div class="form-text text-muted">Choose media type to show/hide thumbnail field.</div>
+                    </div>
+
                     <!-- Media -->
                     <div class="mb-3">
                         <label class="form-label">Media</label>
@@ -158,6 +173,27 @@
                         </div>
 
                         <input type="hidden" name="remove_media" id="remove_media" value="0">
+                        @if($news->media_path)
+                            <div class="form-text text-muted mt-1" id="autoRemoveHint">
+                                If you don’t select a new media file, the existing media will be removed on update.
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Thumbnail (Required if new Media is Video) -->
+                    <div class="mb-3" id="thumbnailWrapper">
+                        <label class="form-label">Video Thumbnail</label>
+                        <input type="file" class="form-control" name="thumbnail" id="thumbnailInput" accept="image/*">
+
+                        @if($news->thumbnail_path)
+                            <div class="mt-2" id="existingThumbnailWrapper">
+                                <img src="{{ asset('storage/' . $news->thumbnail_path) }}" class="img-fluid rounded mb-2">
+                            </div>
+                        @endif
+
+                        <div class="form-text text-muted">
+                            Upload thumbnail image (required only when uploading a new video).
+                        </div>
                     </div>
 
                     <!-- Push -->
@@ -240,12 +276,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const mediaInput = document.getElementById('mediaInput');
     const existingMediaWrapper = document.getElementById('existingMediaWrapper');
     const newMediaHint = document.getElementById('newMediaHint');
+    const autoRemoveHint = document.getElementById('autoRemoveHint');
 
     if (btn) {
         btn.addEventListener('click', function() {
             input.value = "1";
             btn.closest('.mt-2').style.display = 'none';
+            if (autoRemoveHint) autoRemoveHint.classList.add('d-none');
         });
+    }
+
+    // If existing media present and user does not select a new file,
+    // auto-remove on submit (as requested).
+    if (existingMediaWrapper && input) {
+        input.value = "1";
     }
 
     // When selecting new file, hide existing preview immediately (UI only).
@@ -255,9 +299,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (existingMediaWrapper) existingMediaWrapper.style.display = 'none';
                 if (newMediaHint) newMediaHint.classList.remove('d-none');
                 input.value = "0";
+                if (autoRemoveHint) autoRemoveHint.classList.add('d-none');
             }
         });
     }
+
+    // If new media is a video -> thumbnail required
+    const thumbnailInput = document.getElementById('thumbnailInput');
+    const thumbnailWrapper = document.getElementById('thumbnailWrapper');
+    const mediaTypeSelect = document.getElementById('media_type');
+
+    function setThumbnailVisibility(isVideo) {
+        if (!thumbnailWrapper || !thumbnailInput) return;
+        thumbnailWrapper.classList.toggle('d-none', !isVideo);
+        thumbnailInput.required = !!isVideo;
+        if (!isVideo) thumbnailInput.value = '';
+    }
+
+    function updateMediaUI() {
+        const selected = mediaTypeSelect ? mediaTypeSelect.value : '';
+        const hasNewMedia = !!(mediaInput && mediaInput.files && mediaInput.files.length > 0);
+        const isVideo = hasNewMedia && (selected === 'video');
+        setThumbnailVisibility(isVideo);
+    }
+
+    if (mediaTypeSelect) mediaTypeSelect.addEventListener('change', updateMediaUI);
+    if (mediaInput) mediaInput.addEventListener('change', updateMediaUI);
+    updateMediaUI();
 
 });
 </script>

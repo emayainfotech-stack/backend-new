@@ -118,15 +118,42 @@
                             
                             <!-- Right Column -->
                             <div class="col-md-4">
+                                <!-- Media Type -->
+                                <div class="mb-3">
+                                    <label for="media_type" class="form-label">Media Type</label>
+                                    <select class="form-select @error('media_type') is-invalid @enderror"
+                                            id="media_type" name="media_type">
+                                        <option value="image" {{ old('media_type', 'image') === 'image' ? 'selected' : '' }}>Image</option>
+                                        <option value="video" {{ old('media_type', 'image') === 'video' ? 'selected' : '' }}>Video</option>
+                                    </select>
+                                    @error('media_type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text text-muted mt-1">Choose media type to show/hide thumbnail field.</div>
+                                </div>
+
                                 <!-- Media Upload -->
                                 <div class="mb-3">
                                     <label for="media" class="form-label">Media</label>
                                     <input type="file" class="form-control @error('media') is-invalid @enderror" 
-                                           name="media" accept="image/*,video/*">
+                                           id="media" name="media" accept="image/*,video/*">
                                     @error('media')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text text-muted mt-1">Supported formats: JPG, PNG, GIF, MP4 (Max: 10MB)</div>
+                                </div>
+
+                                <!-- Thumbnail Upload (Required if Media is Video) -->
+                                <div class="mb-3" id="thumbnailWrapper">
+                                    <label for="thumbnail" class="form-label">Video Thumbnail</label>
+                                    <input type="file" class="form-control @error('thumbnail') is-invalid @enderror"
+                                           id="thumbnail" name="thumbnail" accept="image/*">
+                                    @error('thumbnail')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text text-muted mt-1" id="thumbnailHelp">
+                                        Upload thumbnail image (required only when media is a video).
+                                    </div>
                                 </div>
                   
                                 <!-- Send Push Notification -->
@@ -234,6 +261,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const shortDescription = document.getElementById('short_description');
     const wordCountEl = document.getElementById('short_description_word_count');
+    const mediaTypeSelect = document.getElementById('media_type');
+    const mediaInput = document.getElementById('media');
+    const thumbnailInput = document.getElementById('thumbnail');
+    const thumbnailWrapper = document.getElementById('thumbnailWrapper');
     const WORD_LIMIT = 70;
 
     function countWords(text) {
@@ -304,6 +335,28 @@ document.addEventListener('DOMContentLoaded', function() {
         shortDescription.addEventListener('input', updateWordCount);
         updateWordCount();
     }
+
+    function setThumbnailVisibility(isVideo) {
+        if (!thumbnailWrapper || !thumbnailInput) return;
+        thumbnailWrapper.classList.toggle('d-none', !isVideo);
+        thumbnailInput.required = !!isVideo;
+        if (!isVideo) thumbnailInput.value = '';
+    }
+
+    function updateMediaUI() {
+        const selected = mediaTypeSelect ? mediaTypeSelect.value : '';
+        const isVideo = selected === 'video';
+        setThumbnailVisibility(isVideo);
+
+        if (mediaInput) {
+            if (selected === 'video') mediaInput.accept = 'video/*';
+            else if (selected === 'image') mediaInput.accept = 'image/*';
+        }
+    }
+
+    if (mediaTypeSelect) mediaTypeSelect.addEventListener('change', updateMediaUI);
+    if (mediaInput) mediaInput.addEventListener('change', updateMediaUI);
+    updateMediaUI();
 });
 </script>
 @endpush
