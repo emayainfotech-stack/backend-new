@@ -222,9 +222,7 @@
                     </div>
                 </div>
 
-                <div class="text-center mt-5">
-                    <a class="btn btn-dark rounded-3 px-4" href="{{ route('login') }}">Go to Admin Login</a>
-                </div>
+              
             </div>
         </section>
 
@@ -234,8 +232,8 @@
                 <div class="row g-4 align-items-start">
                     <div class="col-md-5">
                         <div class="d-flex align-items-center gap-2 fw-bold text-dark mb-2">
-                            <span class="brand-mark" style="width:30px;height:30px;border-radius:10px;">N</span>
-                            <span>My City Only</span>
+                            <img src="{{ asset('images/logo.png') }}" alt="My City Only"
+                                 style="width:30px;height:30px;border-radius:10px;object-fit:contain;background:#fff;border:1px solid rgba(15,23,42,.10);">
                         </div>
                         <div class="text-muted">Short news, better reading. © <span id="landingYear"></span></div>
                     </div>

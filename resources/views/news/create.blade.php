@@ -80,14 +80,10 @@
                                     <div class="col-md-6">
                                         <label for="state_id" class="form-label">State <span class="text-danger">*</span></label>
                                         <select class="form-select @error('state_id') is-invalid @enderror" 
-                                                id="state_id" name="state_id" required>
-                                            <option value="">Select State</option>
-                                            @foreach($states as $state)
-                                                <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                                    {{ $state->name }}
-                                                </option>
-                                            @endforeach
+                                                id="state_id" disabled>
+                                            <option value="1" selected>Rajasthan</option>
                                         </select>
+                                        <input type="hidden" name="state_id" value="1">
                                         @error('state_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -95,9 +91,10 @@
                                     <div class="col-md-6">
                                         <label for="city_id" class="form-label">City <span class="text-danger">*</span></label>
                                         <select class="form-select @error('city_id') is-invalid @enderror" 
-                                                id="city_id" name="city_id" required>
-                                            <option value="">Select State First</option>
+                                                id="city_id" disabled>
+                                            <option value="1" selected>Jaipur</option>
                                         </select>
+                                        <input type="hidden" name="city_id" value="1">
                                         @error('city_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -256,9 +253,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const shortDescription = document.getElementById('short_description');
     const wordCountEl = document.getElementById('short_description_word_count');
     const mediaTypeSelect = document.getElementById('media_type');
@@ -280,54 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const words = countWords(shortDescription.value);
         wordCountEl.textContent = String(words);
         shortDescription.classList.toggle('is-invalid', words > WORD_LIMIT);
-    }
-
-    // Load cities when state changes
-    stateSelect.addEventListener('change', function() {
-        const stateId = this.value;
-        
-        // Reset city dropdown
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        citySelect.disabled = true;
-
-        if (!stateId) {
-            citySelect.innerHTML = '<option value="">Select State First</option>';
-            return;
-        }
-
-        // Fetch cities using fetch API
-        fetch(`/get-cities/${stateId}`, {
-            method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken || '',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            
-            if (data && data.length > 0) {
-                data.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.id;
-                    option.textContent = city.name;
-                    citySelect.appendChild(option);
-                });
-                citySelect.disabled = false;
-            } else {
-                citySelect.innerHTML = '<option value="">No cities available</option>';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching cities:', error);
-            citySelect.innerHTML = '<option value="">Error loading cities</option>';
-        });
-    });
-
-    // Load cities on page load if state is already selected
-    if (stateSelect.value) {
-        stateSelect.dispatchEvent(new Event('change'));
     }
 
     // Word counter (Hindi/English both)

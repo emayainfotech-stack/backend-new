@@ -69,26 +69,20 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label">State <span class="text-danger">*</span></label>
-                            <select class="form-select" id="state_id" name="state_id" required>
-                                <option value="">Select State</option>
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}"
-                                        {{ old('state_id', $news->state_id) == $state->id ? 'selected' : '' }}>
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
+                            <select class="form-select" id="state_id" disabled>
+                                <option value="1" selected>Rajasthan</option>
                             </select>
+                            <input type="hidden" name="state_id" value="1">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">City <span class="text-danger">*</span></label>
-                            <select class="form-select" id="city_id" name="city_id" required>
-                                <option value="">Select State First</option>
+                            <select class="form-select" id="city_id" disabled>
+                                <option value="1" selected>Jaipur</option>
                             </select>
+                            <input type="hidden" name="city_id" value="1">
                         </div>
                     </div>
-
-                    <input type="hidden" id="old_city_id" value="{{ old('city_id', $news->city_id) }}">
 
                     <!-- Tags -->
                     <div class="mt-3">
@@ -222,9 +216,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-    const oldCityId = document.getElementById('old_city_id').value;
     const shortDesc = document.getElementById('short_description');
     const wordCountEl = document.getElementById('short_description_word_count');
 
@@ -239,36 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
         wordCountEl.textContent = String(countWords(shortDesc.value));
     }
 
-    function loadCities(stateId, selectedCityId = null) {
-        citySelect.innerHTML = '<option value="">Loading...</option>';
-
-        fetch(`/get-cities/${stateId}`)
-        .then(res => res.json())
-        .then(data => {
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            data.forEach(city => {
-                let option = new Option(city.name, city.id);
-                if (selectedCityId && selectedCityId == city.id) {
-                    option.selected = true;
-                }
-                citySelect.add(option);
-            });
-        });
-    }
-
-    if (stateSelect.value) {
-        loadCities(stateSelect.value, oldCityId);
-    }
-
     // Word count init + live update (70 words max hint)
     updateWordCount();
     if (shortDesc) {
         shortDesc.addEventListener('input', updateWordCount);
     }
-
-    stateSelect.addEventListener('change', function() {
-        if (this.value) loadCities(this.value);
-    });
 
     // Remove Media
     const btn = document.getElementById('removeMediaBtn');

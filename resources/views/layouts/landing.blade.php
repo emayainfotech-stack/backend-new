@@ -39,6 +39,15 @@
             color: #fff; font-weight: 800; letter-spacing: -.02em;
             box-shadow: 0 12px 30px rgba(239,68,68,.22);
         }
+        .brand-logo {
+            width: 160px!important;
+            height: auto!important;
+            border-radius: 12px;
+            object-fit: contain;
+            background: #fff;
+            border: 1px solid rgba(15,23,42,.10);
+            box-shadow: 0 12px 30px rgba(15,23,42,.10);
+        }
         .hero {
             padding-top: 5.25rem;
             padding-bottom: 4.5rem;
@@ -161,9 +170,8 @@
 <body>
     <nav class="navbar navbar-expand-lg landing-nav sticky-top">
         <div class="container py-2">
-            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{{ url('/') }}">
-                <span class="brand-mark">N</span>
-                <span>My City Only</span>
+            <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}" aria-label="My City Only">
+                <img src="{{ asset('images/logo.png') }}" alt="My City Only" class="brand-logo" style="width: 160px;">
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav">
@@ -175,9 +183,7 @@
                     <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
                     <li class="nav-item"><a class="nav-link" href="#screens">Screens</a></li>
                     <li class="nav-item"><a class="nav-link" href="#stats">Stats</a></li>
-                    <li class="nav-item ms-lg-2">
-                        <a class="btn btn-outline-dark btn-sm" href="{{ route('login') }}">Admin Login</a>
-                    </li>
+                    
                 </ul>
             </div>
         </div>
