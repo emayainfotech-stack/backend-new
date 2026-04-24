@@ -15,6 +15,7 @@ use FFMpeg\Exception\ExecutableNotFoundException;
 use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -143,6 +144,8 @@ class NewsController extends Controller
 
     public function store(Request $request)
     {
+        $isAdmin = (string) optional($request->user())->role === 'admin';
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'short_description' => [
@@ -165,6 +168,7 @@ class NewsController extends Controller
             'source_link' => ['nullable', 'url'],
 
             'media_type' => ['nullable', 'in:image,video'],
+            'status' => [$isAdmin ? 'nullable' : 'prohibited', Rule::in(['pending', 'published'])],
 
             // Media (form ke according)
             'media' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,mp4', 'max:10240'], // 10MB
@@ -222,6 +226,13 @@ class NewsController extends Controller
             }
         }
 
+        $status = 'pending';
+        $publishAt = null;
+        if ($isAdmin && ($data['status'] ?? null) === 'published') {
+            $status = 'published';
+            $publishAt = now();
+        }
+
         // Save data
         $news = News::create([
             'title' => $data['title'],
@@ -238,8 +249,8 @@ class NewsController extends Controller
             'tags' => $tags,
 
             // Default values 
-            'status' => 'pending',
-            'publish_at' => now(),
+            'status' => $status,
+            'publish_at' => $publishAt,
             'is_important' => false,
 
             'media_type' => $mediaType,

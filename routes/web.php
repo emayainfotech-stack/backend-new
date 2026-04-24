@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\InterestAnalyticsController;
 
 Route::get('/', function () {
     return view('landing');
@@ -26,6 +27,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
     Route::get('/dashboard/reporter', [DashboardController::class, 'reporter'])->name('dashboard.reporter');
+    Route::get('/dashboard/interest', [InterestAnalyticsController::class, 'index'])
+        ->name('dashboard.interest')
+        ->middleware('role:admin');
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
     Route::post('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');

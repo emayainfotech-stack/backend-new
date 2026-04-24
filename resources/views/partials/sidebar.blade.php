@@ -100,6 +100,17 @@
                 </a>
             </li>
 
+            @if(auth()->user()?->role === 'admin')
+                <li class="nav-item nav-category">Analytics</li>
+                <li class="nav-item">
+                    <a href="{{ route('dashboard.interest') }}"
+                       class="nav-link {{ request()->routeIs('dashboard.interest') ? 'active' : '' }}">
+                        <i class="link-icon" data-lucide="trending-up"></i>
+                        <span class="link-title">User Interest</span>
+                    </a>
+                </li>
+            @endif
+
         </ul>
     </div>
 </nav>

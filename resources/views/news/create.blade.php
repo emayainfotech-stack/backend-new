@@ -111,6 +111,26 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
+                                @if(auth()->user()?->role === 'admin')
+                                    <!-- Status (Admin only) -->
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">Status</label>
+                                        @php $publishOn = old('status') === 'published'; @endphp
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                   id="publishToggle" {{ $publishOn ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="publishToggle">
+                                                <span id="publishToggleLabel">{{ $publishOn ? 'Published (Live)' : 'Pending' }}</span>
+                                            </label>
+                                        </div>
+                                        <input type="hidden" name="status" id="status" value="{{ $publishOn ? 'published' : 'pending' }}">
+                                        @error('status')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                      
+                                    </div>
+                                @endif
                             </div>
                             
                             <!-- Right Column -->
@@ -259,6 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const mediaInput = document.getElementById('media');
     const thumbnailInput = document.getElementById('thumbnail');
     const thumbnailWrapper = document.getElementById('thumbnailWrapper');
+    const publishToggle = document.getElementById('publishToggle');
+    const statusInput = document.getElementById('status');
+    const publishToggleLabel = document.getElementById('publishToggleLabel');
     const WORD_LIMIT = 70;
 
     function countWords(text) {
@@ -303,6 +326,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mediaTypeSelect) mediaTypeSelect.addEventListener('change', updateMediaUI);
     if (mediaInput) mediaInput.addEventListener('change', updateMediaUI);
     updateMediaUI();
+
+    // Admin publish toggle (ON=published, OFF=pending)
+    function updatePublishStatus() {
+        if (!publishToggle || !statusInput) return;
+        const isPublished = !!publishToggle.checked;
+        statusInput.value = isPublished ? 'published' : 'pending';
+        if (publishToggleLabel) {
+            publishToggleLabel.textContent = isPublished ? 'Published (Live)' : 'Pending';
+        }
+    }
+    if (publishToggle) {
+        publishToggle.addEventListener('change', updatePublishStatus);
+        updatePublishStatus();
+    }
 });
 </script>
 @endpush
