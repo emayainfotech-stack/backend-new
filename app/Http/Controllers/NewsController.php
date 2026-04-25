@@ -8,7 +8,7 @@ use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Exception\ExecutableNotFoundException;
@@ -16,15 +16,44 @@ use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
+use App\Services\FirebaseNotificationService;
 
 class NewsController extends Controller
 {
+    private function publicStoragePath(string $relativePathUnderStorage): string
+    {
+        return public_path('storage/' . ltrim($relativePathUnderStorage, '/'));
+    }
+
+    private function ensurePublicStorageDir(string $subdir): string
+    {
+        $dir = public_path('storage/' . trim($subdir, '/'));
+        File::ensureDirectoryExists($dir);
+        return $dir;
+    }
+
+    private function moveUploadedFileToPublicStorage(\Illuminate\Http\UploadedFile $file, string $subdir): string
+    {
+        $dir = $this->ensurePublicStorageDir($subdir);
+        $filename = now()->format('YmdHis') . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+
+        return trim($subdir, '/') . '/' . $filename; // relative under /storage
+    }
+
+    private function deletePublicStorageFile(?string $relativePathUnderStorage): void
+    {
+        if (! $relativePathUnderStorage) return;
+        $abs = $this->publicStoragePath($relativePathUnderStorage);
+        if (File::exists($abs)) {
+            @unlink($abs);
+        }
+    }
+
     private function generateVideoThumbnail(string $publicDiskVideoPath): ?string
     {
-        $videoAbsolutePath = Storage::disk('public')->path($publicDiskVideoPath);
+        // We store media directly under public/storage for shared hosting compatibility
+        $videoAbsolutePath = $this->publicStoragePath($publicDiskVideoPath);
 
         $tmpBase = tempnam(sys_get_temp_dir(), 'news_thumb_');
         if ($tmpBase === false) {
@@ -53,8 +82,9 @@ class NewsController extends Controller
             $video = $ffmpeg->open($videoAbsolutePath);
             $video->frame(TimeCode::fromSeconds(1))->save($tmpJpg);
 
+            $this->ensurePublicStorageDir('news-thumbnails');
             $thumbnailPath = 'news-thumbnails/' . Str::uuid() . '.jpg';
-            Storage::disk('public')->put($thumbnailPath, file_get_contents($tmpJpg));
+            File::put($this->publicStoragePath($thumbnailPath), file_get_contents($tmpJpg));
 
             return $thumbnailPath;
         } finally {
@@ -66,48 +96,48 @@ class NewsController extends Controller
     public function index(Request $request)
     {
         $query = News::with(['category', 'author']);
-    
+
         // ✅ Quick Date Filters
         if ($request->filled('date')) {
             if ($request->date == 'today') {
                 $query->whereDate('publish_at', Carbon::today());
             }
-    
+
             if ($request->date == '7days') {
                 $query->where('publish_at', '>=', Carbon::now()->subDays(7));
             }
-    
+
             if ($request->date == '1month') {
                 $query->where('publish_at', '>=', Carbon::now()->subMonth());
             }
         }
-    
+
         // ✅ Custom Date Range
         if ($request->filled('date_from')) {
             $query->where('publish_at', '>=', Carbon::parse($request->date_from));
         }
-    
+
         if ($request->filled('date_to')) {
             $query->where('publish_at', '<=', Carbon::parse($request->date_to));
         }
-    
+
         // Status filter
         if ($request->has('status') && in_array($request->status, ['published', 'pending', 'rejected'])) {
             $query->where('status', $request->status);
         }
-    
+
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('short_description', 'like', "%{$search}%")
-                  ->orWhere('tags', 'like', "%{$search}%");
+                    ->orWhere('short_description', 'like', "%{$search}%")
+                    ->orWhere('tags', 'like', "%{$search}%");
             });
         }
-    
+
         $news = $query->orderBy('created_at', 'desc')->paginate(15);
-    
+
         return view('news.index', compact('news'));
     }
 
@@ -158,7 +188,7 @@ class NewsController extends Controller
                     }
                 },
             ],
-         
+
 
             'category_id' => ['required', 'exists:categories,id'],
             'state_id' => ['required', 'exists:states,id'],
@@ -181,7 +211,7 @@ class NewsController extends Controller
         $tags = null;
         if (! empty($data['tags'])) {
             $tags = collect(explode(',', $data['tags']))
-                ->map(fn ($t) => trim($t))
+                ->map(fn($t) => trim($t))
                 ->filter()
                 ->values()
                 ->all();
@@ -192,7 +222,7 @@ class NewsController extends Controller
         $mediaType = null;
         $thumbnailPath = null;
         if ($request->hasFile('media')) {
-            $mediaPath = $request->file('media')->store('news-media', 'public');
+            $mediaPath = $this->moveUploadedFileToPublicStorage($request->file('media'), 'news-media');
 
             $ext = strtolower((string) $request->file('media')->getClientOriginalExtension());
             $detectedType = $ext === 'mp4' ? 'video' : 'image';
@@ -217,7 +247,7 @@ class NewsController extends Controller
                     ]);
                 }
 
-                $thumbnailPath = $request->file('thumbnail')->store('news-thumbnails', 'public');
+                $thumbnailPath = $this->moveUploadedFileToPublicStorage($request->file('thumbnail'), 'news-thumbnails');
 
                 // Safety fallback (shouldn't happen due to validation)
                 if (! $thumbnailPath) {
@@ -237,7 +267,7 @@ class NewsController extends Controller
         $news = News::create([
             'title' => $data['title'],
             'short_description' => $data['short_description'],
-          
+
             'source_link' => $data['source_link'] ?? null,
 
             'category_id' => (int) $data['category_id'],
@@ -259,29 +289,21 @@ class NewsController extends Controller
 
             'send_push_notification' => (bool) $request->boolean('send_push_notification'),
         ]);
-    if ($news->send_push_notification) {
 
-    $factory = (new Factory)
-        ->withServiceAccount(storage_path('app/firebase.json'));
+        // if ($news->send_push_notification && $news->status === 'published') {
 
-    $messaging = $factory->createMessaging();
-
-    $tokens = DB::table('device_tokens')->pluck('token')->toArray();
-
-    if (!empty($tokens)) {
-
-        $message = CloudMessage::new()
-            ->withNotification(Notification::create(
-                'Breaking News 🚨',
-                $news->title
-            ))
-            ->withData([
-                'news_id' => (string) $news->id
-            ]);
-
-        $messaging->sendMulticast($message, $tokens);
-    }
-}
+        //     $notificationService = new FirebaseNotificationService();
+        
+        //     $notificationService->sendToTopic(
+        //         'news',
+        //         'MyCityOnly 🚨',
+        //         $news->title,
+        //         [
+        //             'news_id' => (string) $news->id
+        //         ]
+        //     );
+        // }
+    
         return redirect()->route('news.index')->with('success', 'News saved successfully.');
     }
 
@@ -297,7 +319,7 @@ class NewsController extends Controller
     public function update(Request $request, $id)
     {
         $news = News::findOrFail($id);
-    
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'short_description' => [
@@ -321,7 +343,7 @@ class NewsController extends Controller
             'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'send_push_notification' => ['nullable', 'boolean'],
         ]);
-    
+
         // Tags convert (comma separated → array)
         $tags = null;
         if (!empty($data['tags'])) {
@@ -331,7 +353,7 @@ class NewsController extends Controller
                 ->values()
                 ->all();
         }
-    
+
         // Media handling
         $mediaPath = $news->media_path;
         $mediaType = $news->media_type;
@@ -339,12 +361,8 @@ class NewsController extends Controller
 
         // 🔴 CASE 1: Remove button click
         if ($request->remove_media == "1") {
-            if ($news->media_path && Storage::disk('public')->exists($news->media_path)) {
-                Storage::disk('public')->delete($news->media_path);
-            }
-            if ($news->thumbnail_path && Storage::disk('public')->exists($news->thumbnail_path)) {
-                Storage::disk('public')->delete($news->thumbnail_path);
-            }
+            $this->deletePublicStorageFile($news->media_path);
+            $this->deletePublicStorageFile($news->thumbnail_path);
             $mediaPath = null;
             $mediaType = null;
             $thumbnailPath = null;
@@ -353,13 +371,9 @@ class NewsController extends Controller
         // 🟢 CASE 2: New media upload
         if ($request->hasFile('media')) {
             // old delete
-            if ($news->media_path && Storage::disk('public')->exists($news->media_path)) {
-                Storage::disk('public')->delete($news->media_path);
-            }
-            if ($news->thumbnail_path && Storage::disk('public')->exists($news->thumbnail_path)) {
-                Storage::disk('public')->delete($news->thumbnail_path);
-            }
-            $mediaPath = $request->file('media')->store('news-media', 'public');
+            $this->deletePublicStorageFile($news->media_path);
+            $this->deletePublicStorageFile($news->thumbnail_path);
+            $mediaPath = $this->moveUploadedFileToPublicStorage($request->file('media'), 'news-media');
 
             $ext = strtolower((string) $request->file('media')->getClientOriginalExtension());
             $detectedType = $ext === 'mp4' ? 'video' : 'image';
@@ -382,7 +396,7 @@ class NewsController extends Controller
                         'thumbnail' => 'Thumbnail is required when uploading a video.',
                     ]);
                 }
-                $thumbnailPath = $request->file('thumbnail')->store('news-thumbnails', 'public');
+                $thumbnailPath = $this->moveUploadedFileToPublicStorage($request->file('thumbnail'), 'news-thumbnails');
 
                 // Safety fallback (shouldn't happen due to validation)
                 if (! $thumbnailPath) {
@@ -407,7 +421,7 @@ class NewsController extends Controller
             'thumbnail_path' => $thumbnailPath,
             'send_push_notification' => $request->boolean('send_push_notification'),
         ]);
-    
+
         return redirect()->route('news.index')->with('success', 'News updated successfully.');
     }
 
@@ -416,12 +430,8 @@ class NewsController extends Controller
         $news = News::findOrFail($id);
 
         // Remove associated media file
-        if ($news->media_path && Storage::disk('public')->exists($news->media_path)) {
-            Storage::disk('public')->delete($news->media_path);
-        }
-        if ($news->thumbnail_path && Storage::disk('public')->exists($news->thumbnail_path)) {
-            Storage::disk('public')->delete($news->thumbnail_path);
-        }
+        $this->deletePublicStorageFile($news->media_path);
+        $this->deletePublicStorageFile($news->thumbnail_path);
 
         $news->delete();
 

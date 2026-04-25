@@ -60,15 +60,15 @@ class InterestAnalyticsController extends Controller
             ->selectRaw('news_clicks.news_id, COALESCE(news.title, "Deleted news") as title, COALESCE(categories.name, "Unknown") as category_name, COUNT(*) as clicks')
             ->groupBy('news_clicks.news_id', 'news.title', 'categories.name')
             ->orderByDesc('clicks')
-            ->limit(10)
-            ->get();
+            ->paginate(15, ['*'], 'top_news_page')
+            ->withQueryString();
 
         $deviceLeaders = (clone $base)
             ->selectRaw('device_id, COUNT(*) as clicks, COUNT(DISTINCT news_id) as unique_news')
             ->groupBy('device_id')
             ->orderByDesc('clicks')
-            ->limit(10)
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('analytics.interest', compact(
             'totalClicks',

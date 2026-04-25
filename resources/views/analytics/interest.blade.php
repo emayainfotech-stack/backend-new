@@ -122,7 +122,7 @@
                         <span class="text-muted small">Top 10</span>
                     </div>
 
-                    @if($topNews->isEmpty())
+                    @if($topNews->count() === 0)
                         <div class="text-muted">No clicks yet.</div>
                     @else
                         <div class="table-responsive">
@@ -145,6 +145,12 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        @if($topNews->hasPages())
+                            <div class="mt-3">
+                                {{ $topNews->links('pagination::bootstrap-5') }}
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -158,7 +164,7 @@
                         <span class="text-muted small">Top 10</span>
                     </div>
 
-                    @if($deviceLeaders->isEmpty())
+                    @if($deviceLeaders->count() === 0)
                         <div class="text-muted">No clicks yet.</div>
                     @else
                         <div class="table-responsive">
@@ -181,6 +187,12 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        @if($deviceLeaders->hasPages())
+                            <div class="mt-3">
+                                {{ $deviceLeaders->links('pagination::bootstrap-5') }}
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>

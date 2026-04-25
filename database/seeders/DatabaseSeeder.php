@@ -15,21 +15,22 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(DefaultStateCitySeeder::class);
+        $this->call(DeveloperAdminSeeder::class);
 
         User::query()->firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'admin@mycityonly.com'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('admin12345'),
+                'password' => Hash::make('admin@1234'),
                 'role' => 'admin',
             ]
         );
 
         User::query()->firstOrCreate(
-            ['email' => 'reporter@example.com'],
+            ['email' => 'reporter@mycityonly.com'],
             [
                 'name' => 'Reporter',
-                'password' => Hash::make('reporter12345'),
+                'password' => Hash::make('reporter@12345'),
                 'role' => 'reporter',
             ]
         );

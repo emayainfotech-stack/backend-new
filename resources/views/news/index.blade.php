@@ -306,7 +306,7 @@
 
                                                 <!-- Media -->
                                                 @if($item->media_path)
-                                                    <div class="news-preview-media rounded-3 overflow-hidden bg-light border mb-4" style="display: flex; align-items: center; justify-content: center;">
+                                                    <div class="news-preview-media rounded-3 overflow-hidden bg-light border mb-4" style="display: flex!important; align-items: center!important; justify-content: center!important; max-height: 400px!important;">
                                                         @if(Str::endsWith($item->media_path, '.mp4') || Str::endsWith($item->media_path, '.mov') || Str::endsWith($item->media_path, '.avi'))
                                                             <video src="{{ asset('storage/'.$item->media_path) }}"
                                                                    controls
@@ -316,7 +316,7 @@
                                                         @else
                                                             <img src="{{ asset('storage/'.$item->media_path) }}"
                                                                  class="news-preview-image"
-                                                                 alt="Media preview">
+                                                                 alt="Media preview" style="width: 100%!important; height: 100%!important; object-fit: contain!important;">
                                                         @endif
                                                     </div>
                                                 @endif
@@ -530,25 +530,24 @@
 
     .news-open-modal { cursor: pointer; }
 
-    /* Bigger centered media preview inside modal */
     .news-preview-media {
-        width: 100%;
-        height: min(70vh, 520px)!important;
+        width: 100%!important;
+        height: 400px!important; /* fixed height */
         display: flex;
-        align-items: center!important;
-        justify-content: center!important;
-        background: #000!important;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        overflow: hidden;
+        border-radius: 12px;
     }
 
-    .news-preview-video,
-    .news-preview-image {
-        max-width: 100%;
-        max-height: 100%;
-        width: auto;
-        height: auto;
-        object-fit: contain;
+    /* Image + Video both fit inside container */
+    .news-preview-media img,
+    .news-preview-media video {
+        max-width: 100%!important;
+        max-height: 100%!important;
+        object-fit: contain!important; /* important */
         display: block;
-        margin: 0 auto;
     }
     
     .badge.rounded-pill {
