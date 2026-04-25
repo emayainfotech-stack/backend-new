@@ -279,171 +279,7 @@
                                     </td>
                                 </tr>
 
-                                <!-- Improved View Modal -->
-                                <div class="modal fade" id="reviewModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
-                                        <div class="modal-content border-0 rounded-4 overflow-hidden">
-
-                                            <!-- Header -->
-                                            <div class="modal-header border-bottom py-3 px-4">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="rounded-circle d-inline-block
-                                                        @if($item->status == 'published') bg-success
-                                                        @elseif($item->status == 'pending') bg-warning
-                                                        @else bg-danger @endif"
-                                                        style="width:8px;height:8px;">
-                                                    </span>
-                                                    <span class="text-uppercase text-muted fw-semibold"
-                                                        style="font-size:11px;letter-spacing:.06em;">
-                                                        {{ ucfirst($item->status) }}
-                                                    </span>
-                                                </div>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-
-                                            <!-- Body -->
-                                            <div class="modal-body p-4">
-
-                                                <!-- Media -->
-                                                @if($item->media_path)
-                                                    <div class="news-preview-media rounded-3 overflow-hidden bg-light border mb-4" style="display: flex!important; align-items: center!important; justify-content: center!important; max-height: 400px!important;">
-                                                        @if(Str::endsWith($item->media_path, '.mp4') || Str::endsWith($item->media_path, '.mov') || Str::endsWith($item->media_path, '.avi'))
-                                                            <video src="{{ asset('storage/'.$item->media_path) }}"
-                                                                   controls
-                                                                   playsinline
-                                                                   preload="metadata"
-                                                                   class="news-preview-video"></video>
-                                                        @else
-                                                            <img src="{{ asset('storage/'.$item->media_path) }}"
-                                                                 class="news-preview-image"
-                                                                 alt="Media preview" style="width: 100%!important; height: 100%!important; object-fit: contain!important;">
-                                                        @endif
-                                                    </div>
-                                                @endif
-
-                                                <!-- Title -->
-                                                <h4 class="fw-semibold mb-3" style="line-height:1.4;">
-                                                    {{ $item->title }}
-                                                </h4>
-
-                                                <!-- Meta badges -->
-                                                <div class="d-flex flex-wrap gap-2 mb-4">
-                                                    <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                        <i class="bi bi-folder2 me-1"></i>
-                                                        {{ $item->category->name ?? 'N/A' }}
-                                                    </span>
-                                             
-                                                    <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                        <i class="bi bi-calendar3 me-1"></i>
-                                                        {{ $item->created_at->format('d M Y') }}
-                                                    </span>
-                                                    @if($item->city)
-                                                        <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
-                                                            <i class="bi bi-geo-alt me-1"></i>
-                                                            {{ $item->city }}
-                                                        </span>
-                                                    @endif
-                                                    @if($item->is_important)
-                                                        <span class="badge rounded-pill bg-danger fw-normal px-3 py-2">
-                                                            <i class="bi bi-star-fill me-1"></i>
-                                                            Important
-                                                        </span>
-                                                    @endif
-                                                </div>
-
-                                                <hr class="my-3">
-
-                                                <!-- Short Description -->
-                                                <div class="mb-3">
-                                                    <p class="text-uppercase text-muted fw-semibold mb-1"
-                                                        style="font-size:11px;letter-spacing:.05em;">
-                                                        Short Description
-                                                    </p>
-                                                    <p class="mb-0" style="color:#6c757d;">{{ $item->short_description }}</p>
-                                                </div>
-
-                                                <!-- Full Description -->
-                                                @if($item->full_description)
-                                                    <div class="mb-3">
-                                                        <p class="text-uppercase text-muted fw-semibold mb-1"
-                                                            style="font-size:11px;letter-spacing:.05em;">
-                                                            Full Description
-                                                        </p>
-                                                        <p class="mb-0" style="color:#6c757d;">{{ $item->full_description }}</p>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Source Link -->
-                                                @if($item->source_link)
-                                                    <div class="mb-3">
-                                                        <p class="text-uppercase text-muted fw-semibold mb-1"
-                                                            style="font-size:11px;letter-spacing:.05em;">
-                                                            Source Link
-                                                        </p>
-                                                        <a href="{{ $item->source_link }}"
-                                                           target="_blank" rel="noopener noreferrer"
-                                                           class="text-primary text-decoration-underline">
-                                                            {{ $item->source_link }}
-                                                        </a>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Tags -->
-                                                @if($item->tags)
-                                                    <div>
-                                                        <p class="text-uppercase text-muted fw-semibold mb-2"
-                                                            style="font-size:11px;letter-spacing:.05em;">
-                                                            Tags
-                                                        </p>
-                                                        <div class="d-flex flex-wrap gap-2">
-                                                            @foreach(is_array($item->tags) ? $item->tags : json_decode($item->tags, true) ?? [] as $tag)
-                                                                <span class="badge rounded-pill px-3 py-2"
-                                                                    style="background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC;font-weight:400;">
-                                                                    #{{ $tag }}
-                                                                </span>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                            </div>
-
-                                            <!-- Footer -->
-                                            <div class="modal-footer border-top px-4 py-3">
-                                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Modal End -->
-
-                                <!-- Rejection Reason Modal -->
-                                @if($item->status === 'rejected' && $item->rejection_reason)
-                                    <div class="modal fade" id="reasonModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 rounded-3">
-                                                <div class="modal-header border-bottom bg-danger-light py-3 px-4">
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <i data-lucide="alert-circle" class="text-danger"></i>
-                                                        <h5 class="modal-title fw-semibold mb-0">Rejection Reason</h5>
-                                                    </div>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body px-4 py-4">
-                                                    <p class="text-muted mb-3 small">This news article was rejected with the following reason:</p>
-                                                    <div class="alert alert-danger-light border border-danger-subtle rounded-2 p-3">
-                                                        <p class="mb-0" style="color:#721c24;">{{ $item->rejection_reason }}</p>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer border-top px-4 py-3">
-                                                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                                <!-- Rejection Reason Modal End -->
+                                {{-- Modals are rendered outside the table for valid HTML (see below). --}}
 
                             @empty
                                 <tr>
@@ -473,6 +309,184 @@
         </div>
     </div>
 </div>
+
+<!-- Modals (outside table for valid markup) -->
+@foreach($news as $item)
+    <!-- Improved View Modal -->
+    <div class="modal fade" id="reviewModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 overflow-hidden">
+
+                <!-- Header -->
+                <div class="modal-header border-bottom py-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded-circle d-inline-block
+                            @if($item->status == 'published') bg-success
+                            @elseif($item->status == 'pending') bg-warning
+                            @else bg-danger @endif"
+                            style="width:8px;height:8px;">
+                        </span>
+                        <span class="text-uppercase text-muted fw-semibold"
+                            style="font-size:11px;letter-spacing:.06em;">
+                            {{ ucfirst($item->status) }}
+                        </span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body p-4">
+
+                    <!-- Media -->
+                    @if($item->media_path)
+                        @php
+                            $ext = strtolower(pathinfo((string) $item->media_path, PATHINFO_EXTENSION));
+                            $isVideo = in_array($ext, ['mp4','webm','ogg','mov','avi','m4v']);
+                            $mime = match ($ext) {
+                                'webm' => 'video/webm',
+                                'ogg' => 'video/ogg',
+                                default => 'video/mp4',
+                            };
+                        @endphp
+
+                        <div class="news-preview-media mb-4">
+                            @if($isVideo)
+                                <video class="news-preview-video" controls playsinline preload="metadata">
+                                    <source src="{{ asset('storage/'.$item->media_path) }}" type="{{ $mime }}">
+                                    Your browser does not support video
+                                </video>
+                            @else
+                                <img src="{{ asset('storage/'.$item->media_path) }}"
+                                     class="news-preview-image"
+                                     alt="Media preview">
+                            @endif
+                        </div>
+                    @endif
+
+                    <!-- Title -->
+                    <h4 class="fw-semibold mb-3" style="line-height:1.4;">
+                        {{ $item->title }}
+                    </h4>
+
+                    <!-- Meta badges -->
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
+                            <i class="bi bi-folder2 me-1"></i>
+                            {{ $item->category->name ?? 'N/A' }}
+                        </span>
+
+                        <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ $item->created_at->format('d M Y') }}
+                        </span>
+                        @if($item->city)
+                            <span class="badge rounded-pill border text-bg-light fw-normal px-3 py-2">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                {{ $item->city }}
+                            </span>
+                        @endif
+                        @if($item->is_important)
+                            <span class="badge rounded-pill bg-danger fw-normal px-3 py-2">
+                                <i class="bi bi-star-fill me-1"></i>
+                                Important
+                            </span>
+                        @endif
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Short Description -->
+                    <div class="mb-3">
+                        <p class="text-uppercase text-muted fw-semibold mb-1"
+                            style="font-size:11px;letter-spacing:.05em;">
+                            Short Description
+                        </p>
+                        <p class="mb-0" style="color:#6c757d;">{{ $item->short_description }}</p>
+                    </div>
+
+                    <!-- Full Description -->
+                    @if($item->full_description)
+                        <div class="mb-3">
+                            <p class="text-uppercase text-muted fw-semibold mb-1"
+                                style="font-size:11px;letter-spacing:.05em;">
+                                Full Description
+                            </p>
+                            <p class="mb-0" style="color:#6c757d;">{{ $item->full_description }}</p>
+                        </div>
+                    @endif
+
+                    <!-- Source Link -->
+                    @if($item->source_link)
+                        <div class="mb-3">
+                            <p class="text-uppercase text-muted fw-semibold mb-1"
+                                style="font-size:11px;letter-spacing:.05em;">
+                                Source Link
+                            </p>
+                            <a href="{{ $item->source_link }}"
+                               target="_blank" rel="noopener noreferrer"
+                               class="text-primary text-decoration-underline">
+                                {{ $item->source_link }}
+                            </a>
+                        </div>
+                    @endif
+
+                    <!-- Tags -->
+                    @if($item->tags)
+                        <div>
+                            <p class="text-uppercase text-muted fw-semibold mb-2"
+                                style="font-size:11px;letter-spacing:.05em;">
+                                Tags
+                            </p>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach(is_array($item->tags) ? $item->tags : json_decode($item->tags, true) ?? [] as $tag)
+                                    <span class="badge rounded-pill px-3 py-2"
+                                        style="background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC;font-weight:400;">
+                                        #{{ $tag }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Modal End -->
+
+    <!-- Rejection Reason Modal -->
+    @if($item->status === 'rejected' && $item->rejection_reason)
+        <div class="modal fade" id="reasonModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-3">
+                    <div class="modal-header border-bottom bg-danger-light py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="alert-circle" class="text-danger"></i>
+                            <h5 class="modal-title fw-semibold mb-0">Rejection Reason</h5>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body px-4 py-4">
+                        <p class="text-muted mb-3 small">This news article was rejected with the following reason:</p>
+                        <div class="alert alert-danger-light border border-danger-subtle rounded-2 p-3">
+                            <p class="mb-0" style="color:#721c24;">{{ $item->rejection_reason }}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top px-4 py-3">
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+    <!-- Rejection Reason Modal End -->
+@endforeach
 @endsection
 
 @push('styles')
