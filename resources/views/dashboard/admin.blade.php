@@ -355,7 +355,7 @@
                                                 style="max-height:240px;">
                                                 @if(Str::endsWith($news->media_path, '.mp4') || Str::endsWith($news->media_path, '.mov') || Str::endsWith($news->media_path, '.avi'))
                                                     <video src="{{ asset('storage/'.$news->media_path) }}"
-                                                        controls class="w-100"></video>
+                                                        controls class="w-100" style="max-height:240px;"></video>
                                                 @else
                                                     <img src="{{ asset('storage/'.$news->media_path) }}"
                                                         class="w-100 object-fit-cover">

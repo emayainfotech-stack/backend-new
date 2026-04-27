@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Exception\ExecutableNotFoundException;
@@ -290,19 +291,28 @@ class NewsController extends Controller
             'send_push_notification' => (bool) $request->boolean('send_push_notification'),
         ]);
 
-        // if ($news->send_push_notification && $news->status === 'published') {
+        if ($news->send_push_notification) {
+            $tokens = DB::table('device_tokens')->pluck('token');
 
-        //     $notificationService = new FirebaseNotificationService();
-        
-        //     $notificationService->sendToTopic(
-        //         'news',
-        //         'MyCityOnly 🚨',
-        //         $news->title,
-        //         [
-        //             'news_id' => (string) $news->id
-        //         ]
-        //     );
-        // }
+            foreach ($tokens as $token) {
+                try {
+                    Http::post('https://exp.host/--/api/v2/push/send', [
+                        'to' => $token,
+                        'title' => $news->title,
+                        'body' => 'Test Notification',
+                        'data' => [
+                            'news_id' => (string) $news->id,
+                        ],
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Expo push send failed', [
+                        'token' => $token,
+                        'news_id' => $news->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
     
         return redirect()->route('news.index')->with('success', 'News saved successfully.');
     }

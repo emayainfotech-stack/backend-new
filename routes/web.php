@@ -7,11 +7,29 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\InterestAnalyticsController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 Route::get('/', function () {
     return view('landing');
 });
 
+Route::get('/send-test-notification/{token}', function ($token) {
+
+    $response = Http::post('https://exp.host/--/api/v2/push/send', [
+        'to' => $token,
+        'title' => '🧪 Test Notification',
+        'body' => 'Ye Laravel se URL ke through bheji gayi notification hai 🚀',
+        'sound' => 'default',
+    ]);
+
+    return response()->json([
+        'message' => 'Notification sent',
+        'token' => $token,
+        'expo_response' => $response->json(),
+    ]);
+});
 // Public legal pages
 Route::view('/terms-and-conditions', 'public.terms')->name('public.terms');
 Route::view('/privacy-policy', 'public.privacy')->name('public.privacy');
@@ -20,7 +38,19 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
+Route::post('/save-token', function (Request $req) {
+    $data = $req->validate([
+        'token' => ['required', 'string'],
+    ]);
 
+    // Avoid duplicate tokens (common when app re-registers)
+    DB::table('device_tokens')->updateOrInsert(
+        ['token' => $data['token']],
+        ['updated_at' => now(), 'created_at' => now()]
+    );
+
+    return response()->json(['success' => true]);
+});
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
