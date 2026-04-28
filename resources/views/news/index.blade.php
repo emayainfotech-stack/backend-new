@@ -349,15 +349,15 @@
                             };
                         @endphp
 
-                        <div class="news-preview-media mb-4">
+                        <div class="news-preview-media mb-4" style="height:350px; display:flex;justify-content:center">
                             @if($isVideo)
-                                <video class="news-preview-video" controls playsinline preload="metadata">
+                                <video class="news-preview-video" controls playsinline preload="metadata" style="max-height:350px;">
                                     <source src="{{ asset('storage/'.$item->media_path) }}" type="{{ $mime }}">
                                     Your browser does not support video
                                 </video>
                             @else
                                 <img src="{{ asset('storage/'.$item->media_path) }}"
-                                     class="news-preview-image"
+                                     class="news-preview-image" style="max-height:320px;"
                                      alt="Media preview">
                             @endif
                         </div>

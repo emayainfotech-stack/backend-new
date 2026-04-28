@@ -9,12 +9,15 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
+                    @php
+                        $role = strtolower((string) ($user->role ?? ''));
+                        $initial = $role === 'admin' ? 'A' : ($role === 'reporter' ? 'R' : strtoupper(substr((string) ($user->name ?? 'U'), 0, 1)));
+                    @endphp
                     <div class="mb-3">
-                        <img src="{{ asset('Backend/assets/images/faces/face1.jpg') }}" 
-                             class="rounded-circle" 
-                             width="120" 
-                             height="120" 
-                             alt="Profile">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold mx-auto"
+                             style="width:120px;height:120px;font-size:48px;line-height:1;">
+                            {{ $initial }}
+                        </div>
                     </div>
                     <h4 class="mb-1">{{ $user->name ?? 'User' }}</h4>
                     <p class="text-secondary mb-3">{{ $user->email }}</p>

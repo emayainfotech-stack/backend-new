@@ -210,12 +210,23 @@
             </li> --}}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img class="w-30px h-30px ms-1 rounded-circle" src="{{ asset('Backend/assets/images/faces/face1.jpg') }}" alt="profile">
+                    @php
+                        $u = auth()->user();
+                        $role = strtolower((string) ($u->role ?? ''));
+                        $initial = $role === 'admin' ? 'A' : ($role === 'reporter' ? 'R' : strtoupper(substr((string) ($u->name ?? 'U'), 0, 1)));
+                    @endphp
+                    <div class="ms-1 rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                         style="width:30px;height:30px;font-size:14px;line-height:1;">
+                        {{ $initial }}
+                    </div>
                 </a>
                 <div class="dropdown-menu p-0" aria-labelledby="profileDropdown">
                     <div class="d-flex flex-column align-items-center border-bottom px-5 py-3">
                         <div class="mb-3">
-                            <img class="w-80px h-80px rounded-circle" src="{{ asset('Backend/assets/images/faces/face1.jpg') }}" alt="">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                                 style="width:80px;height:80px;font-size:32px;line-height:1;">
+                                {{ $initial }}
+                            </div>
                         </div>
                         <div class="text-center">
                             <p class="fs-16px fw-bolder">{{ auth()->user()->name ?? 'User' }}</p>
