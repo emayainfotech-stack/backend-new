@@ -8,6 +8,36 @@ use Illuminate\Http\Request;
 
 class NewsApiController extends Controller
 {
+    private function toNewsResponseItem(News $item): array
+    {
+        $ext = strtolower(pathinfo((string) $item->media_path, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'webm' => 'video/webm',
+            'ogg' => 'video/ogg',
+            default => 'video/mp4',
+        };
+
+        return [
+            'id' => $item->id,
+            'title' => $item->title,
+            'shortSummary' => $item->short_description,
+            'imageUrl' => $item->media_type === 'video'
+                ? ($item->thumbnail_path ? asset('storage/' . $item->thumbnail_path) : null)
+                : ($item->media_path ? asset('storage/' . $item->media_path) : null),
+            'videoUrl' => $item->media_type === 'video' && $item->media_path
+                ? asset('storage/' . $item->media_path)
+                : null,
+            'videoMime' => $item->media_type === 'video' ? $mime : null,
+            'url' => $item->source_link,
+            'source' => optional($item->author)->name ?? 'Admin',
+            'publishedAt' => $item->publish_at,
+            'category' => optional($item->category)->slug,
+            'tags' => $item->tags,
+            'cityId' => $item->city_id,
+            'stateId' => $item->state_id,
+        ];
+    }
+
     private function getLimit(Request $request, int $default = 20): int
     {
         $limit = (int) $request->query('limit', $default);
@@ -43,22 +73,7 @@ class NewsApiController extends Controller
         return response()->json([
             'success' => true,
             'data' => collect($paginator->items())->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'shortSummary' => $item->short_description,
-                    'imageUrl' => $item->media_type === 'video'
-                        ? ($item->thumbnail_path ? asset('storage/' . $item->thumbnail_path) : null)
-                        : ($item->media_path ? asset('storage/' . $item->media_path) : null),
-                    'videoUrl' => $item->media_type === 'video' && $item->media_path
-                        ? asset('storage/' . $item->media_path)
-                        : null,
-                    'url' => $item->source_link,
-                    'source' => optional($item->author)->name ?? 'Admin',
-                    'publishedAt' => $item->publish_at,
-                    'category' => optional($item->category)->slug,
-                    'readTime' => '2 min',
-                ];
+                return $this->toNewsResponseItem($item) + ['readTime' => '2 min'];
             }),
             'meta' => [
                 'page' => $paginator->currentPage(),
@@ -66,6 +81,25 @@ class NewsApiController extends Controller
                 'total' => $paginator->total(),
                 'lastPage' => $paginator->lastPage(),
             ],
+        ]);
+    }
+
+    public function show(Request $request, int $id)
+    {
+        $news = News::with(['category', 'author'])
+            ->where('status', 'published')
+            ->find($id);
+
+        if (! $news) {
+            return response()->json([
+                'success' => false,
+                'message' => 'News not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->toNewsResponseItem($news),
         ]);
     }
 

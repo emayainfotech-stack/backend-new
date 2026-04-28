@@ -16,7 +16,7 @@ Route::get('/', function () {
 });
 
 Route::get('/send-test-notification/{token}', function ($token) {
-
+    
     $response = Http::post('https://exp.host/--/api/v2/push/send', [
         'to' => $token,
         'title' => '🧪 Test Notification',
@@ -38,19 +38,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
-Route::post('/save-token', function (Request $req) {
-    $data = $req->validate([
-        'token' => ['required', 'string'],
-    ]);
 
-    // Avoid duplicate tokens (common when app re-registers)
-    DB::table('device_tokens')->updateOrInsert(
-        ['token' => $data['token']],
-        ['updated_at' => now(), 'created_at' => now()]
-    );
-
-    return response()->json(['success' => true]);
-});
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {

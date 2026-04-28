@@ -293,15 +293,24 @@ class NewsController extends Controller
 
         if ($news->send_push_notification) {
             $tokens = DB::table('device_tokens')->pluck('token');
-
+        
+            $imageUrl = $news->thumbnail_path
+                ? asset('storage/' . $news->thumbnail_path)
+                : ($news->media_path ? asset('storage/' . $news->media_path) : null);
+        
             foreach ($tokens as $token) {
                 try {
                     Http::post('https://exp.host/--/api/v2/push/send', [
                         'to' => $token,
                         'title' => $news->title,
-                        'body' => 'Test Notification',
+                        'body' => $news->short_description,
+                        'sound' => 'default',
                         'data' => [
                             'news_id' => (string) $news->id,
+                            'screen' => 'news-detail',
+                        ],
+                        'richContent' => [
+                            'image' => $imageUrl,
                         ],
                     ]);
                 } catch (\Throwable $e) {
