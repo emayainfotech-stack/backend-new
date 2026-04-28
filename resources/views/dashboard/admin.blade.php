@@ -352,13 +352,13 @@
                                         <!-- Media -->
                                         @if($news->media_path)
                                             <div class="rounded-3 overflow-hidden bg-light border mb-4"
-                                                style="max-height:240px;">
+                                                style="height:320px;">
                                                 @if(Str::endsWith($news->media_path, '.mp4') || Str::endsWith($news->media_path, '.mov') || Str::endsWith($news->media_path, '.avi'))
                                                     <video src="{{ asset('storage/'.$news->media_path) }}"
-                                                        controls class="w-100" style="max-height:240px;"></video>
+                                                        controls class="w-100" style="max-height:320px;"></video>
                                                 @else
                                                     <img src="{{ asset('storage/'.$news->media_path) }}"
-                                                        class="w-100 object-fit-cover">
+                                                        class="w-100 object-fit-cover" style="max-height:320px;">
                                                 @endif
                                             </div>
                                         @endif
