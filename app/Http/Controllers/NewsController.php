@@ -139,7 +139,11 @@ class NewsController extends Controller
 
         $news = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return view('news.index', compact('news'));
+        return response()
+            ->view('news.index', compact('news'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 
     public function updateStatus(Request $request, $id)
@@ -344,7 +348,9 @@ class NewsController extends Controller
             }
         }
     
-        return redirect()->route('news.index')->with('success', 'News saved successfully.');
+        return redirect()
+            ->route('news.index', ['refresh' => now()->timestamp])
+            ->with('success', 'News saved successfully.');
     }
 
     public function edit($id)
