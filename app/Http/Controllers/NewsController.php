@@ -293,14 +293,21 @@ class NewsController extends Controller
 
         if ($news->send_push_notification) {
             $tokens = DB::table('device_tokens')->pluck('token');
-        
-            $imageUrl = $news->thumbnail_path
-                ? asset('storage/' . $news->thumbnail_path)
-                : ($news->media_path ? asset('storage/' . $news->media_path) : null);
-        
+
+            // For Expo rich notifications, only pass an image URL when it is actually an image.
+            // Video posts without thumbnail should not send richContent.image.
+            $imageUrl = null;
+            if ($news->media_type === 'video') {
+                if (! empty($news->thumbnail_path)) {
+                    $imageUrl = asset('storage/' . $news->thumbnail_path);
+                }
+            } elseif (! empty($news->media_path)) {
+                $imageUrl = asset('storage/' . $news->media_path);
+            }
+
             foreach ($tokens as $token) {
                 try {
-                    Http::post('https://exp.host/--/api/v2/push/send', [
+                    $payload = [
                         'to' => $token,
                         'title' => $news->title,
                         'body' => $news->short_description,
@@ -309,10 +316,24 @@ class NewsController extends Controller
                             'news_id' => (string) $news->id,
                             'screen' => 'news-detail',
                         ],
-                        'richContent' => [
+                    ];
+
+                    if ($imageUrl) {
+                        $payload['richContent'] = [
                             'image' => $imageUrl,
-                        ],
-                    ]);
+                        ];
+                    }
+
+                    $response = Http::post('https://exp.host/--/api/v2/push/send', $payload);
+
+                    if ($response->failed()) {
+                        Log::warning('Expo push API returned non-success response', [
+                            'token' => $token,
+                            'news_id' => $news->id,
+                            'status' => $response->status(),
+                            'response' => $response->body(),
+                        ]);
+                    }
                 } catch (\Throwable $e) {
                     Log::warning('Expo push send failed', [
                         'token' => $token,
