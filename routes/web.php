@@ -10,7 +10,7 @@ use App\Http\Controllers\InterestAnalyticsController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-
+use App\Http\Controllers\ShareRedirectController;
 Route::get('/', function () {
     return view('landing');
 });
@@ -38,7 +38,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
-
+Route::get('/s/{id}', [ShareRedirectController::class, 'redirect'])->name('share.redirect');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
