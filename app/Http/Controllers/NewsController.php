@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use App\Services\FirebaseNotificationService;
+use App\Services\AutoTranslateService;
 
 class NewsController extends Controller
 {
@@ -268,10 +269,20 @@ class NewsController extends Controller
             $publishAt = now();
         }
 
+        $translator = app(AutoTranslateService::class);
+        $titleEn = $translator->translate($data['title'], 'en');
+        $titleHi = $translator->translate($data['title'], 'hi');
+        $shortEn = $translator->translate($data['short_description'], 'en');
+        $shortHi = $translator->translate($data['short_description'], 'hi');
+
         // Save data
         $news = News::create([
             'title' => $data['title'],
+            'title_en' => $titleEn,
+            'title_hi' => $titleHi,
             'short_description' => $data['short_description'],
+            'short_description_en' => $shortEn,
+            'short_description_hi' => $shortHi,
 
             'source_link' => $data['source_link'] ?? null,
 
@@ -453,9 +464,19 @@ class NewsController extends Controller
             }
         }
 
+        $translator = app(AutoTranslateService::class);
+        $titleEn = $translator->translate($data['title'], 'en');
+        $titleHi = $translator->translate($data['title'], 'hi');
+        $shortEn = $translator->translate($data['short_description'], 'en');
+        $shortHi = $translator->translate($data['short_description'], 'hi');
+
         $news->update([
             'title' => $data['title'],
+            'title_en' => $titleEn,
+            'title_hi' => $titleHi,
             'short_description' => $data['short_description'],
+            'short_description_en' => $shortEn,
+            'short_description_hi' => $shortHi,
             'category_id' => $data['category_id'],
             'state_id' => $data['state_id'],
             'city_id' => $data['city_id'],

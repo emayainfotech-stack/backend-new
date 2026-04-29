@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class NewsApiController extends Controller
 {
-    private function toNewsResponseItem(News $item): array
+    private function toNewsResponseItem(News $item, string $lang = 'en'): array
     {
         $ext = strtolower(pathinfo((string) $item->media_path, PATHINFO_EXTENSION));
         $mime = match ($ext) {
@@ -17,10 +17,21 @@ class NewsApiController extends Controller
             default => 'video/mp4',
         };
 
+        $lang = strtolower((string) $lang);
+        $lang = in_array($lang, ['en', 'hi']) ? $lang : 'en';
+
+        if ($lang === 'hi') {
+            $title = (string) ($item->title_hi ?: ($item->title ?: ($item->title_en ?: '')));
+            $shortSummary = (string) ($item->short_description_hi ?: ($item->short_description ?: ($item->short_description_en ?: '')));
+        } else {
+            $title = (string) ($item->title_en ?: ($item->title ?: ($item->title_hi ?: '')));
+            $shortSummary = (string) ($item->short_description_en ?: ($item->short_description ?: ($item->short_description_hi ?: '')));
+        }
+
         return [
             'id' => $item->id,
-            'title' => $item->title,
-            'shortSummary' => $item->short_description,
+            'title' => $title,
+            'shortSummary' => $shortSummary,
             'imageUrl' => $item->media_type === 'video'
                 ? ($item->thumbnail_path ? asset('storage/' . $item->thumbnail_path) : null)
                 : ($item->media_path ? asset('storage/' . $item->media_path) : null),
@@ -51,6 +62,9 @@ class NewsApiController extends Controller
 
     public function index(Request $request)
     {
+        $lang = strtolower((string) $request->get('lang', 'en'));
+        $lang = in_array($lang, ['en', 'hi']) ? $lang : 'en';
+
         $query = News::with(['category', 'author'])
             ->where('status', 'published');
 
@@ -72,8 +86,8 @@ class NewsApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => collect($paginator->items())->map(function ($item) {
-                return $this->toNewsResponseItem($item) + ['readTime' => '2 min'];
+            'data' => collect($paginator->items())->map(function ($item) use ($lang) {
+                return $this->toNewsResponseItem($item, $lang) + ['readTime' => '2 min'];
             }),
             'meta' => [
                 'page' => $paginator->currentPage(),
@@ -86,6 +100,9 @@ class NewsApiController extends Controller
 
     public function show(Request $request, int $id)
     {
+        $lang = strtolower((string) $request->get('lang', 'en'));
+        $lang = in_array($lang, ['en', 'hi']) ? $lang : 'en';
+
         $news = News::with(['category', 'author'])
             ->where('status', 'published')
             ->find($id);
@@ -99,30 +116,36 @@ class NewsApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $this->toNewsResponseItem($news),
+            'data' => $this->toNewsResponseItem($news, $lang),
         ]);
     }
 
 
 
-     public function search(Request $request)
+    public function search(Request $request)
     {
+        $lang = strtolower((string) $request->get('lang', 'en'));
+        $lang = in_array($lang, ['en', 'hi']) ? $lang : 'en';
+
         $query = $request->q;
     
         $builder = News::with(['category', 'city', 'state'])
             ->when($query, function ($q) use ($query) {
-                $q->where('title', 'LIKE', "%{$query}%")
-                  ->orWhere('short_description', 'LIKE', "%{$query}%")
-                  
-                  // CATEGORY RELATION FIX
-                  ->orWhereHas('category', function ($cat) use ($query) {
-                      $cat->where('name', 'LIKE', "%{$query}%");
-                  })
-
-                  // CITY SEARCH
-                  ->orWhereHas('city', function ($city) use ($query) {
-                      $city->where('name', 'LIKE', "%{$query}%");
-                  });
+                $q->where(function ($qq) use ($query) {
+                    $qq->where('title', 'LIKE', "%{$query}%")
+                        ->orWhere('title_en', 'LIKE', "%{$query}%")
+                        ->orWhere('title_hi', 'LIKE', "%{$query}%")
+                        ->orWhere('short_description', 'LIKE', "%{$query}%")
+                        ->orWhere('short_description_en', 'LIKE', "%{$query}%")
+                        ->orWhere('short_description_hi', 'LIKE', "%{$query}%");
+                })
+                ->orWhereHas('category', function ($cat) use ($query) {
+                    $cat->where('name', 'LIKE', "%{$query}%")
+                        ->orWhere('slug', 'LIKE', "%{$query}%");
+                })
+                ->orWhereHas('city', function ($city) use ($query) {
+                    $city->where('name', 'LIKE', "%{$query}%");
+                });
             })
             ->latest();
 
@@ -135,22 +158,8 @@ class NewsApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'data' => collect($paginator->items())->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'shortSummary' => $item->short_description,
-                    'imageUrl' => $item->media_type === 'video'
-                        ? ($item->thumbnail_path ? asset('storage/' . $item->thumbnail_path) : null)
-                        : ($item->media_path ? asset('storage/' . $item->media_path) : null),
-                    'videoUrl' => $item->media_type === 'video' && $item->media_path
-                        ? asset('storage/' . $item->media_path)
-                        : null,
-                    'url' => $item->source_link,
-                    'source' => optional($item->author)->name ?? 'Unknown',
-                    'publishedAt' => $item->publish_at,
-                    'category' => optional($item->category)->name ?? 'general',
-                ];
+            'data' => collect($paginator->items())->map(function ($item) use ($lang) {
+                return $this->toNewsResponseItem($item, $lang);
             }),
             'meta' => [
                 'page' => $paginator->currentPage(),
