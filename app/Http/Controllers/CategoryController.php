@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Services\AutoTranslateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -28,6 +29,10 @@ class CategoryController extends Controller
 
         $data['slug'] = Str::slug($data['name']);
 
+        $translator = app(AutoTranslateService::class);
+        $data['name_en'] = $translator->translate($data['name'], 'en');
+        $data['name_hi'] = $translator->translate($data['name'], 'hi');
+
         Category::create($data);
 
         return redirect()->route('categories.index')->with('success', 'Category created.');
@@ -45,6 +50,10 @@ class CategoryController extends Controller
         ]);
 
         $data['slug'] = Str::slug($data['name']);
+
+        $translator = app(AutoTranslateService::class);
+        $data['name_en'] = $translator->translate($data['name'], 'en');
+        $data['name_hi'] = $translator->translate($data['name'], 'hi');
 
         $category->update($data);
 

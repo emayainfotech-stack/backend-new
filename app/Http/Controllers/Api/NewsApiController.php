@@ -28,6 +28,13 @@ class NewsApiController extends Controller
             $shortSummary = (string) ($item->short_description_en ?: ($item->short_description ?: ($item->short_description_hi ?: '')));
         }
 
+        $categoryLabel = null;
+        if ($item->relationLoaded('category') && $item->category) {
+            $categoryLabel = $lang === 'hi'
+                ? (string) ($item->category->name_hi ?? $item->category->name ?? $item->category->name_en ?? $item->category->slug)
+                : (string) ($item->category->name_en ?? $item->category->name ?? $item->category->name_hi ?? $item->category->slug);
+        }
+
         return [
             'id' => $item->id,
             'title' => $title,
@@ -42,7 +49,7 @@ class NewsApiController extends Controller
             'url' => $item->source_link,
             'source' => optional($item->author)->name ?? 'Admin',
             'publishedAt' => $item->publish_at,
-            'category' => optional($item->category)->slug,
+            'category' => $categoryLabel ?? optional($item->category)->slug,
             'tags' => $item->tags,
             'cityId' => $item->city_id,
             'stateId' => $item->state_id,
