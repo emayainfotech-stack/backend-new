@@ -38,7 +38,7 @@
                                   rows="3"
                                   required>{{ old('short_description', $news->short_description) }}</textarea>
                         <div class="form-text text-muted">
-                            <span id="short_description_word_count">0</span>/70 words
+                            <span id="short_description_word_count">0</span>/60 words
                         </div>
                     </div>
 
@@ -169,7 +169,7 @@
                         <input type="hidden" name="remove_media" id="remove_media" value="0">
                         @if($news->media_path)
                             <div class="form-text text-muted mt-1" id="autoRemoveHint">
-                                If you don’t select a new media file, the existing media will be removed on update.
+                                Existing medil stay unless you remove it or upla wiload a new file.
                             </div>
                         @endif
                     </div>
@@ -192,9 +192,22 @@
 
                     <!-- Push -->
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox"  id="send_push_notification" name="send_push_notification" value="1"
-                               {{ old('send_push_notification', $news->send_push_notification) ? 'checked' : '' }}>
+                        @php
+                            $pushAlreadySent = !empty($news->push_sent_at);
+                            $pushChecked = (bool) old('send_push_notification', $news->send_push_notification);
+                        @endphp
+
+                        @if($pushAlreadySent && $pushChecked)
+                            <input type="hidden" name="send_push_notification" value="1">
+                        @endif
+
+                        <input class="form-check-input" type="checkbox" id="send_push_notification" name="send_push_notification" value="1"
+                               {{ $pushChecked ? 'checked' : '' }}
+                               {{ $pushAlreadySent ? 'disabled' : '' }}>
                         <label class="form-check-label" for="send_push_notification">Send Push Notification</label>
+                        @if($pushAlreadySent)
+                            <div class="form-text text-muted">Notification already sent once. It will not be sent again on edit.</div>
+                        @endif
                     </div>
                
 
@@ -218,6 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const shortDesc = document.getElementById('short_description');
     const wordCountEl = document.getElementById('short_description_word_count');
+    const WORD_LIMIT = 60;
 
     function countWords(text) {
         const trimmed = (text || '').trim();
@@ -227,10 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateWordCount() {
         if (!shortDesc || !wordCountEl) return;
-        wordCountEl.textContent = String(countWords(shortDesc.value));
+        const words = countWords(shortDesc.value);
+        wordCountEl.textContent = String(words);
+        shortDesc.classList.toggle('is-invalid', words > WORD_LIMIT);
     }
 
-    // Word count init + live update (70 words max hint)
+    // Word count init + live update (60 words max hint)
     updateWordCount();
     if (shortDesc) {
         shortDesc.addEventListener('input', updateWordCount);
@@ -252,11 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // If existing media present and user does not select a new file,
-    // auto-remove on submit (as requested).
-    if (existingMediaWrapper && input) {
-        input.value = "1";
-    }
+    // Keep existing media by default. Only remove when user clicks "Remove Media".
 
     // When selecting new file, hide existing preview immediately (UI only).
     if (mediaInput) {

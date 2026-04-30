@@ -34,6 +34,7 @@ class News extends Model
         'publish_at',
         'is_important',
         'send_push_notification',
+        'push_sent_at',
     ];
 
     protected function casts(): array
@@ -43,6 +44,7 @@ class News extends Model
             'publish_at' => 'datetime',
             'is_important' => 'boolean',
             'send_push_notification' => 'boolean',
+            'push_sent_at' => 'datetime',
         ];
     }
 

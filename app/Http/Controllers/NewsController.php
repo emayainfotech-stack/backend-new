@@ -189,8 +189,8 @@ class NewsController extends Controller
                 'string',
                 function ($attribute, $value, $fail) {
                     $words = preg_split('/\s+/u', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY);
-                    if (count($words) > 70) {
-                        $fail('Description must not be greater than 70 words.');
+                    if (count($words) > 65) {
+                        $fail('Description must not be greater than 65 words.');
                     }
                 },
             ],
@@ -306,7 +306,7 @@ class NewsController extends Controller
             'send_push_notification' => (bool) $request->boolean('send_push_notification'),
         ]);
 
-        if ($news->send_push_notification) {
+        if ($news->send_push_notification && $news->status === 'published' && ! $news->push_sent_at) {
             $tokens = DB::table('device_tokens')->pluck('token');
 
             // For Expo rich notifications, only pass an image URL when it is actually an image.
@@ -357,6 +357,9 @@ class NewsController extends Controller
                     ]);
                 }
             }
+
+            // Mark as sent once (do not re-send on edit)
+            $news->forceFill(['push_sent_at' => now()])->save();
         }
     
         return redirect()
@@ -384,8 +387,8 @@ class NewsController extends Controller
                 'string',
                 function ($attribute, $value, $fail) {
                     $words = preg_split('/\s+/u', trim($value), -1, PREG_SPLIT_NO_EMPTY);
-                    if (count($words) > 70) {
-                        $fail('Description must not be greater than 70 words.');
+                    if (count($words) > 65) {
+                        $fail('Description must not be greater than 65 words.');
                     }
                 },
             ],
@@ -470,6 +473,11 @@ class NewsController extends Controller
         $shortEn = $translator->translate($data['short_description'], 'en');
         $shortHi = $translator->translate($data['short_description'], 'hi');
 
+        $publishAt = null;
+        if (($data['status'] ?? null) === 'published') {
+            $publishAt = now();
+        }
+
         $news->update([
             'title' => $data['title'],
             'title_en' => $titleEn,
@@ -483,11 +491,65 @@ class NewsController extends Controller
             'tags' => $tags,
             'source_link' => $data['source_link'],
             'status' => $data['status'],
+            'publish_at' => $publishAt,
             'media_type' => $mediaType,
             'media_path' => $mediaPath,
             'thumbnail_path' => $thumbnailPath,
             'send_push_notification' => $request->boolean('send_push_notification'),
         ]);
+
+        if ($news->send_push_notification && $news->status === 'published' && ! $news->push_sent_at) {
+            $tokens = DB::table('device_tokens')->pluck('token');
+
+            $imageUrl = null;
+            if ($news->media_type === 'video') {
+                if (! empty($news->thumbnail_path)) {
+                    $imageUrl = asset('storage/' . $news->thumbnail_path);
+                }
+            } elseif (! empty($news->media_path)) {
+                $imageUrl = asset('storage/' . $news->media_path);
+            }
+
+            foreach ($tokens as $token) {
+                try {
+                    $payload = [
+                        'to' => $token,
+                        'title' => $news->title,
+                        'body' => $news->short_description,
+                        'sound' => 'default',
+                        'data' => [
+                            'news_id' => (string) $news->id,
+                            'screen' => 'news-detail',
+                        ],
+                    ];
+
+                    if ($imageUrl) {
+                        $payload['richContent'] = [
+                            'image' => $imageUrl,
+                        ];
+                    }
+
+                    $response = Http::post('https://exp.host/--/api/v2/push/send', $payload);
+
+                    if ($response->failed()) {
+                        Log::warning('Expo push API returned non-success response', [
+                            'token' => $token,
+                            'news_id' => $news->id,
+                            'status' => $response->status(),
+                            'response' => $response->body(),
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Expo push send failed', [
+                        'token' => $token,
+                        'news_id' => $news->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $news->forceFill(['push_sent_at' => now()])->save();
+        }
 
         return redirect()->route('news.index')->with('success', 'News updated successfully.');
     }

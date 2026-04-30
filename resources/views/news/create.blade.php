@@ -37,10 +37,10 @@
                                     <label for="short_description" class="form-label">Description <span class="text-danger">*</span></label>
                                     <textarea class="form-control @error('short_description') is-invalid @enderror"
                                               id="short_description" name="short_description" rows="3"
-                                              placeholder="Maximum 70 words "
+                                              placeholder="Maximum 60 words "
                                               required>{{ old('short_description') }}</textarea>
                                     <div class="form-text text-muted">
-                                        <span id="short_description_word_count">0</span>/70 words
+                                        <span id="short_description_word_count">0</span>/60 words
                                     </div>
                                     @error('short_description')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const publishToggle = document.getElementById('publishToggle');
     const statusInput = document.getElementById('status');
     const publishToggleLabel = document.getElementById('publishToggleLabel');
-    const WORD_LIMIT = 70;
+    const WORD_LIMIT = 60;
 
     function countWords(text) {
         return (text || '')

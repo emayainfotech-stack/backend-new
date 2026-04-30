@@ -116,7 +116,7 @@
                                         <span class="city-badge" style="background: rgba(37,99,235,0.22); color:#93c5fd;">Trending</span>
                                     </div>
                                     <div class="bg-white bg-opacity-10 rounded-3 p-2 mb-2">
-                                        <div class="text-white small fw-semibold">Big headline in 70 words</div>
+                                        <div class="text-white small fw-semibold">Big headline in 60 words</div>
                                         <div class="text-white-50 small">2 min read</div>
                                     </div>
                                     <div class="bg-white bg-opacity-10 rounded-3 p-2 mt-1">

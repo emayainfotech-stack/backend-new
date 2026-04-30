@@ -156,47 +156,7 @@
             </div>
         </div>
 
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Most Active Devices</h5>
-                        <span class="text-muted small">Top 10</span>
-                    </div>
-
-                    @if($deviceLeaders->count() === 0)
-                        <div class="text-muted">No clicks yet.</div>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0">
-                                <thead>
-                                <tr>
-                                    <th>Device ID</th>
-                                    <th class="text-end">Clicks</th>
-                                    <th class="text-end">Unique News</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($deviceLeaders as $row)
-                                    <tr>
-                                        <td class="font-monospace">{{ \Illuminate\Support\Str::limit($row->device_id, 40) }}</td>
-                                        <td class="text-end">{{ number_format($row->clicks) }}</td>
-                                        <td class="text-end">{{ number_format($row->unique_news) }}</td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if($deviceLeaders->hasPages())
-                            <div class="mt-3">
-                                {{ $deviceLeaders->links('pagination::bootstrap-5') }}
-                            </div>
-                        @endif
-                    @endif
-                </div>
-            </div>
-        </div>
+        {{-- Most Active Devices hidden --}}
     </div>
 @endsection
 
