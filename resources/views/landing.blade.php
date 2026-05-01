@@ -571,7 +571,7 @@
                 </div>
                 <div class="col-md-4" data-reveal="d1">
                     <div class="stat-card">
-                        <div class="stat-number">70</div>
+                        <div class="stat-number">60</div>
                         <p class="stat-label">Words per story,<br>maximum</p>
                     </div>
                 </div>

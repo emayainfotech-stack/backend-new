@@ -294,25 +294,20 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#premiumNav" aria-label="Menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            @php
+                $onHome = url()->current() === url('/');
+                $hash = fn ($id) => $onHome ? '#'.$id : url('/#'.$id);
+            @endphp
             <div class="collapse navbar-collapse" id="premiumNav">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-lg-3">
-                    @if(url()->current() === url('/'))
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="#features">Features</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="#screens">Screens</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="#stats">Stats</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.terms') }}">Terms</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.privacy') }}">Privacy</a></li>
-                        <li class="nav-item ms-lg-2">
-                            <a class="btn-nav-cta nav-link" href="#download">Get App</a>
-                        </li>
-                    @else
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ url('/') }}">Home</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.terms') }}">Terms</a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.privacy') }}">Privacy</a></li>
-                        <li class="nav-item ms-lg-2">
-                            <a class="btn-nav-cta nav-link" href="{{ route('login') }}">Admin</a>
-                        </li>
-                    @endif
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('features') }}">Features</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('screens') }}">Screens</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('stats') }}">Stats</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.terms') }}">Terms</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.privacy') }}">Privacy</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn-nav-cta nav-link" href="{{ $hash('download') }}">Get App</a>
+                    </li>
                 </ul>
             </div>
         </div>
