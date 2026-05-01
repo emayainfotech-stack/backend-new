@@ -137,7 +137,7 @@
                         <input type="hidden" name="date_to" value="{{ request('date_to') }}">
                     @endif
                     <input type="text" name="search" class="form-control"
-                           placeholder="Search by title, description, tags..."
+                           placeholder="Search by title, description..."
                            value="{{ request('search') }}">
 
                     <button class="btn btn-primary">Search</button>
@@ -427,24 +427,6 @@
                                class="text-primary text-decoration-underline">
                                 {{ $item->source_link }}
                             </a>
-                        </div>
-                    @endif
-
-                    <!-- Tags -->
-                    @if($item->tags)
-                        <div>
-                            <p class="text-uppercase text-muted fw-semibold mb-2"
-                                style="font-size:11px;letter-spacing:.05em;">
-                                Tags
-                            </p>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach(is_array($item->tags) ? $item->tags : json_decode($item->tags, true) ?? [] as $tag)
-                                    <span class="badge rounded-pill px-3 py-2"
-                                        style="background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC;font-weight:400;">
-                                        #{{ $tag }}
-                                    </span>
-                                @endforeach
-                            </div>
                         </div>
                     @endif
 

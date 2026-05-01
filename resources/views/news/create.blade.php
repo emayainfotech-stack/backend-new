@@ -100,17 +100,6 @@
                                         @enderror
                                     </div>
                                 </div>
-                                
-                                <!-- Tags -->
-                                <div class="mb-3">
-                                    <label for="tags" class="form-label">Tags</label>
-                                    <input type="text" class="form-control @error('tags') is-invalid @enderror" 
-                                           id="tags" name="tags" value="{{ old('tags') }}" 
-                                           placeholder="Enter tags separated by commas">
-                                    @error('tags')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
 
                                 @if(auth()->user()?->role === 'admin')
                                     <!-- Status (Admin only) -->

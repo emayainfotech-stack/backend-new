@@ -28,7 +28,6 @@ class News extends Model
         'media_type',
         'media_path',
         'thumbnail_path',
-        'tags',
         'status',
         'rejection_reason',
         'publish_at',
@@ -40,7 +39,6 @@ class News extends Model
     protected function casts(): array
     {
         return [
-            'tags' => 'array',
             'publish_at' => 'datetime',
             'is_important' => 'boolean',
             'send_push_notification' => 'boolean',

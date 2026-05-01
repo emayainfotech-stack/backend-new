@@ -50,7 +50,6 @@ class NewsApiController extends Controller
             'source' => optional($item->author)->name ?? 'Admin',
             'publishedAt' => $item->publish_at,
             'category' => $categoryLabel ?? optional($item->category)->slug,
-            'tags' => $item->tags,
             'cityId' => $item->city_id,
             'stateId' => $item->state_id,
         ];

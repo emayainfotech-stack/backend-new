@@ -133,8 +133,7 @@ class NewsController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('short_description', 'like', "%{$search}%")
-                    ->orWhere('tags', 'like', "%{$search}%");
+                    ->orWhere('short_description', 'like', "%{$search}%");
             });
         }
 
@@ -200,7 +199,6 @@ class NewsController extends Controller
             'state_id' => ['required', 'exists:states,id'],
             'city_id' => ['required', 'exists:cities,id'],
 
-            'tags' => ['nullable', 'string'],
             'source_link' => ['nullable', 'url'],
 
             'media_type' => ['nullable', 'in:image,video'],
@@ -212,16 +210,6 @@ class NewsController extends Controller
 
             'send_push_notification' => ['nullable', 'boolean'],
         ]);
-
-        // Tags convert (comma se array)
-        $tags = null;
-        if (! empty($data['tags'])) {
-            $tags = collect(explode(',', $data['tags']))
-                ->map(fn($t) => trim($t))
-                ->filter()
-                ->values()
-                ->all();
-        }
 
         // Media upload
         $mediaPath = null;
@@ -291,8 +279,6 @@ class NewsController extends Controller
 
             'state_id' => (int) $data['state_id'],
             'city_id' => (int) $data['city_id'],
-
-            'tags' => $tags,
 
             // Default values 
             'status' => $status,
@@ -395,7 +381,6 @@ class NewsController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'state_id' => ['required', 'exists:states,id'],
             'city_id' => ['required', 'exists:cities,id'],
-            'tags' => ['nullable', 'string'],
             'source_link' => ['nullable', 'url'],
             'status' => ['required', 'in:pending,published,rejected'],
             'media_type' => ['nullable', 'in:image,video'],
@@ -403,16 +388,6 @@ class NewsController extends Controller
             'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'send_push_notification' => ['nullable', 'boolean'],
         ]);
-
-        // Tags convert (comma separated → array)
-        $tags = null;
-        if (!empty($data['tags'])) {
-            $tags = collect(explode(',', $data['tags']))
-                ->map(fn($t) => trim($t))
-                ->filter()
-                ->values()
-                ->all();
-        }
 
         // Media handling
         $mediaPath = $news->media_path;
@@ -488,7 +463,6 @@ class NewsController extends Controller
             'category_id' => $data['category_id'],
             'state_id' => $data['state_id'],
             'city_id' => $data['city_id'],
-            'tags' => $tags,
             'source_link' => $data['source_link'],
             'status' => $data['status'],
             'publish_at' => $publishAt,

@@ -79,7 +79,6 @@ class DashboardController extends Controller
             $recentNewsQuery->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%$search%")
                   ->orWhere('short_description', 'like', "%$search%")
-                  ->orWhere('tags', 'like', "%$search%")
                   ->orWhereHas('author', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%$search%");
                   })
@@ -164,8 +163,7 @@ class DashboardController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('short_description', 'like', "%{$search}%")
-                    ->orWhere('tags', 'like', "%{$search}%");
+                    ->orWhere('short_description', 'like', "%{$search}%");
             });
         }
 

@@ -84,14 +84,6 @@
                         </div>
                     </div>
 
-                    <!-- Tags -->
-                    <div class="mt-3">
-                        <label class="form-label">Tags</label>
-                        <input type="text" class="form-control"
-                               name="tags"
-                               value="{{ old('tags', $news->tags ? implode(', ', $news->tags) : '') }}">
-                    </div>
-
                     <!-- Status -->
                     @php $status = old('status', $news->status); @endphp
 
