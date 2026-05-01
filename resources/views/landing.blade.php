@@ -517,8 +517,8 @@
     {{-- ── TICKER ── --}}
     <div class="ticker-bar" aria-hidden="true">
         <div class="ticker-track">
-            @foreach(['Short format news', 'Hindi & English', '70 words max', 'Push alerts', 'Always 24×7', 'Clean UI',
-                      'Short format news', 'Hindi & English', '70 words max', 'Push alerts', 'Always 24×7', 'Clean UI'] as $item)
+            @foreach(['Short format news', 'Hindi & English', '60 words max', 'Push alerts', 'Always 24×7', 'Clean UI',
+                      'Short format news', 'Hindi & English', '60 words max', 'Push alerts', 'Always 24×7', 'Clean UI'] as $item)
                 <span class="ticker-item">{{ $item }} <span class="ticker-sep">—</span></span>
             @endforeach
         </div>
@@ -540,7 +540,7 @@
             <div class="features-grid">
                 @php
                 $features = [
-                    ['01', '📝', 'Short format',  'Every story under 70 words. You\'re informed in 60 seconds — not 6 minutes.'],
+                    ['01', '📝', 'Short format',  'Every story under 60 words. You\'re informed in 60 seconds — not 6 minutes.'],
                     ['02', '✦',  'Clean reading', 'Zero ads cluttering the story. A focused layout that respects your attention.'],
                     ['03', '🗂',  'Categories',   'Pick what you care about — politics, sports, tech, or entertainment.'],
                     ['04', '🔔', 'Push alerts',   'Breaking news, delivered the moment it matters. Only relevant to your city.'],
