@@ -303,6 +303,7 @@
                     <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('features') }}">Features</a></li>
                     <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('screens') }}">Screens</a></li>
                     <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ $hash('stats') }}">Stats</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.about') }}">About</a></li>
                     <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.terms') }}">Terms</a></li>
                     <li class="nav-item"><a class="nav-link nav-link-premium" href="{{ route('public.privacy') }}">Privacy</a></li>
                     <li class="nav-item ms-lg-2">

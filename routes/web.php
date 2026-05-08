@@ -33,6 +33,7 @@ Route::get('/send-test-notification/{token}', function ($token) {
 // Public legal pages
 Route::view('/terms-and-conditions', 'public.terms')->name('public.terms');
 Route::view('/privacy-policy', 'public.privacy')->name('public.privacy');
+Route::view('/about', 'public.about')->name('public.about');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
