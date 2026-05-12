@@ -8,6 +8,33 @@ use Illuminate\Http\Request;
 
 class NewsApiController extends Controller
 {
+    private function getBucket($publishAt): string
+    {
+        if (! $publishAt) {
+            return 'older';
+        }
+
+        $date = \Illuminate\Support\Carbon::parse($publishAt);
+
+        if ($date->isToday()) {
+            return 'today';
+        }
+        if ($date->isYesterday()) {
+            return 'yesterday';
+        }
+
+        $daysAgo = $date->copy()->startOfDay()->diffInDays(now()->startOfDay());
+
+        if ($daysAgo <= 7) {
+            return 'week';
+        }
+        if ($daysAgo <= 30) {
+            return 'month';
+        }
+
+        return 'older';
+    }
+
     private function toNewsResponseItem(News $item, string $lang = 'en'): array
     {
         $ext = strtolower(pathinfo((string) $item->media_path, PATHINFO_EXTENSION));
@@ -49,6 +76,7 @@ class NewsApiController extends Controller
             'url' => $item->source_link,
             'source' => optional($item->author)->name ?? 'Admin',
             'publishedAt' => $item->publish_at,
+            'bucket' => $this->getBucket($item->publish_at),
             'category' => $categoryLabel ?? optional($item->category)->slug,
             'cityId' => $item->city_id,
             'stateId' => $item->state_id,
@@ -82,7 +110,8 @@ class NewsApiController extends Controller
         }
 
         $paginator = $query
-            ->latest()
+            ->orderByDesc('publish_at')
+            ->orderByDesc('id')
             ->paginate(
                 $this->getLimit($request, 20),
                 ['*'],
@@ -90,9 +119,7 @@ class NewsApiController extends Controller
                 $this->getPage($request, 1)
             );
 
-        $todayTotal = News::where('status', 'published')
-            ->whereDate('publish_at', today())
-            ->count();
+        $bucketCounts = $this->getBucketCounts($request);
 
         return response()->json([
             'success' => true,
@@ -104,9 +131,45 @@ class NewsApiController extends Controller
                 'limit' => $paginator->perPage(),
                 'total' => $paginator->total(),
                 'lastPage' => $paginator->lastPage(),
-                'todayTotal' => $todayTotal,
+                'todayTotal' => $bucketCounts['today'],
+                'buckets' => $bucketCounts,
             ],
         ]);
+    }
+
+    private function getBucketCounts(Request $request): array
+    {
+        $base = News::where('status', 'published');
+
+        if ($request->filled('category')) {
+            $base->whereHas('category', function ($q) use ($request) {
+                $q->where('slug', $request->category);
+            });
+        }
+
+        $today = today();
+        $yesterday = $today->copy()->subDay();
+        $weekStart = $today->copy()->subDays(7);
+        $monthStart = $today->copy()->subDays(30);
+
+        return [
+            'today' => (clone $base)->whereDate('publish_at', $today)->count(),
+            'yesterday' => (clone $base)->whereDate('publish_at', $yesterday)->count(),
+            'week' => (clone $base)
+                ->whereDate('publish_at', '>=', $weekStart)
+                ->whereDate('publish_at', '<', $yesterday)
+                ->count(),
+            'month' => (clone $base)
+                ->whereDate('publish_at', '>=', $monthStart)
+                ->whereDate('publish_at', '<', $weekStart)
+                ->count(),
+            'older' => (clone $base)
+                ->where(function ($q) use ($monthStart) {
+                    $q->whereDate('publish_at', '<', $monthStart)
+                        ->orWhereNull('publish_at');
+                })
+                ->count(),
+        ];
     }
 
     public function show(Request $request, int $id)
