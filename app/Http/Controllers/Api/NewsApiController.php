@@ -90,6 +90,10 @@ class NewsApiController extends Controller
                 $this->getPage($request, 1)
             );
 
+        $todayTotal = News::where('status', 'published')
+            ->whereDate('publish_at', today())
+            ->count();
+
         return response()->json([
             'success' => true,
             'data' => collect($paginator->items())->map(function ($item) use ($lang) {
@@ -100,6 +104,7 @@ class NewsApiController extends Controller
                 'limit' => $paginator->perPage(),
                 'total' => $paginator->total(),
                 'lastPage' => $paginator->lastPage(),
+                'todayTotal' => $todayTotal,
             ],
         ]);
     }
