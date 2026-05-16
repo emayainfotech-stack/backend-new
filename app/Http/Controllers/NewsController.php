@@ -7,9 +7,7 @@ use App\Models\News;
 use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Exception\ExecutableNotFoundException;
@@ -17,11 +15,15 @@ use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
-use App\Services\FirebaseNotificationService;
 use App\Services\AutoTranslateService;
+use App\Services\FirebaseNotificationService;
 
 class NewsController extends Controller
 {
+    public function __construct(
+        private readonly FirebaseNotificationService $pushNotifications,
+    ) {}
+
     private function publicStoragePath(string $relativePathUnderStorage): string
     {
         return public_path('storage/' . ltrim($relativePathUnderStorage, '/'));
@@ -166,6 +168,8 @@ class NewsController extends Controller
 
         $news->save();
 
+        $this->pushNotifications->sendPushNotificationIfNeeded($news);
+
         return back()->with('success', 'News status updated.');
     }
 
@@ -292,62 +296,8 @@ class NewsController extends Controller
             'send_push_notification' => (bool) $request->boolean('send_push_notification'),
         ]);
 
-        if ($news->send_push_notification && $news->status === 'published' && ! $news->push_sent_at) {
-            $tokens = DB::table('device_tokens')->pluck('token');
+        $this->pushNotifications->sendPushNotificationIfNeeded($news);
 
-            // For Expo rich notifications, only pass an image URL when it is actually an image.
-            // Video posts without thumbnail should not send richContent.image.
-            $imageUrl = null;
-            if ($news->media_type === 'video') {
-                if (! empty($news->thumbnail_path)) {
-                    $imageUrl = asset('storage/' . $news->thumbnail_path);
-                }
-            } elseif (! empty($news->media_path)) {
-                $imageUrl = asset('storage/' . $news->media_path);
-            }
-
-            foreach ($tokens as $token) {
-                try {
-                    $payload = [
-                        'to' => $token,
-                        'title' => $news->title,
-                        'body' => $news->short_description,
-                        'sound' => 'default',
-                        'data' => [
-                            'news_id' => (string) $news->id,
-                            'screen' => 'news-detail',
-                        ],
-                    ];
-
-                    if ($imageUrl) {
-                        $payload['richContent'] = [
-                            'image' => $imageUrl,
-                        ];
-                    }
-
-                    $response = Http::post('https://exp.host/--/api/v2/push/send', $payload);
-
-                    if ($response->failed()) {
-                        Log::warning('Expo push API returned non-success response', [
-                            'token' => $token,
-                            'news_id' => $news->id,
-                            'status' => $response->status(),
-                            'response' => $response->body(),
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('Expo push send failed', [
-                        'token' => $token,
-                        'news_id' => $news->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            // Mark as sent once (do not re-send on edit)
-            $news->forceFill(['push_sent_at' => now()])->save();
-        }
-    
         return redirect()
             ->route('news.index', ['refresh' => now()->timestamp])
             ->with('success', 'News saved successfully.');
@@ -472,58 +422,7 @@ class NewsController extends Controller
             'send_push_notification' => $request->boolean('send_push_notification'),
         ]);
 
-        if ($news->send_push_notification && $news->status === 'published' && ! $news->push_sent_at) {
-            $tokens = DB::table('device_tokens')->pluck('token');
-
-            $imageUrl = null;
-            if ($news->media_type === 'video') {
-                if (! empty($news->thumbnail_path)) {
-                    $imageUrl = asset('storage/' . $news->thumbnail_path);
-                }
-            } elseif (! empty($news->media_path)) {
-                $imageUrl = asset('storage/' . $news->media_path);
-            }
-
-            foreach ($tokens as $token) {
-                try {
-                    $payload = [
-                        'to' => $token,
-                        'title' => $news->title,
-                        'body' => $news->short_description,
-                        'sound' => 'default',
-                        'data' => [
-                            'news_id' => (string) $news->id,
-                            'screen' => 'news-detail',
-                        ],
-                    ];
-
-                    if ($imageUrl) {
-                        $payload['richContent'] = [
-                            'image' => $imageUrl,
-                        ];
-                    }
-
-                    $response = Http::post('https://exp.host/--/api/v2/push/send', $payload);
-
-                    if ($response->failed()) {
-                        Log::warning('Expo push API returned non-success response', [
-                            'token' => $token,
-                            'news_id' => $news->id,
-                            'status' => $response->status(),
-                            'response' => $response->body(),
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('Expo push send failed', [
-                        'token' => $token,
-                        'news_id' => $news->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            $news->forceFill(['push_sent_at' => now()])->save();
-        }
+        $this->pushNotifications->sendPushNotificationIfNeeded($news);
 
         return redirect()->route('news.index')->with('success', 'News updated successfully.');
     }
