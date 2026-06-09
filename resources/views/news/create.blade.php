@@ -146,7 +146,7 @@
                                     @error('media')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="form-text text-muted mt-1">Supported formats: JPG, PNG, GIF, MP4 (Max: 10MB)</div>
+                                    <div class="form-text text-muted mt-1">Image: JPG, PNG, GIF (max 280KB) · Video: MP4 (max 10MB)</div>
                                 </div>
 
                                 <!-- Thumbnail Upload (Required if Media is Video) -->
@@ -158,7 +158,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text text-muted mt-1" id="thumbnailHelp">
-                                        Upload thumbnail image (required only when media is a video).
+                                        Required when media is a video. Image: JPG, PNG, GIF (max 280KB)
                                     </div>
                                 </div>
                   
