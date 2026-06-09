@@ -20,17 +20,13 @@ class ShareRedirectController extends Controller
             : ($news->media_path ? asset('storage/' . $news->media_path) : '');
 
         $title = $news->title;
-        $desc = $news->short_description;
 
         return response("
         <html>
         <head>
             <title>{$title}</title>
             <meta property='og:title' content='{$title}' />
-            <meta property='og:description' content='{$desc}' />
             <meta property='og:image' content='{$image}' />
-            <meta property='og:url' content='https://mycityonly.com/s/{$id}' />
-            <meta property='og:type' content='article' />
 
             <script>
                 window.location.href = 'mycityonly://news/{$id}';
